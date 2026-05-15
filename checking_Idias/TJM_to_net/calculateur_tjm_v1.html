@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculateur TJM → Revenu Net Mensuel (Micro-Entrepreneur BNC)</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8f9fa;
+            color: #212529;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        h1 { text-align: center; margin-bottom: 10px; color: #1a237e; }
+        .subtitle { text-align: center; color: #666; margin-bottom: 30px; font-size: 0.9em; }
+        .container { max-width: 900px; margin: 0 auto; }
+        .section {
+            background: #fff;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+        .section h2 {
+            color: #1565c0;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e3f2fd;
+        }
+        .input-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .input-group label {
+            font-weight: 600;
+            min-width: 250px;
+        }
+        .input-group input[type="number"] {
+            padding: 8px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 1em;
+            width: 120px;
+        }
+        .radio-group {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 15px;
+        }
+        .radio-group label {
+            cursor: pointer;
+            padding: 8px 16px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+        .radio-group input[type="radio"]:checked + span {
+            color: #1565c0;
+            font-weight: 600;
+        }
+        .radio-group label:has(input:checked) {
+            border-color: #1565c0;
+            background: #e3f2fd;
+        }
+        .parts-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        .parts-group label {
+            cursor: pointer;
+            padding: 6px 14px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 0.95em;
+            transition: all 0.2s;
+        }
+        .parts-group input[type="radio"]:checked + span {
+            color: #1565c0;
+            font-weight: 600;
+        }
+        .parts-group label:has(input:checked) {
+            border-color: #1565c0;
+            background: #e3f2fd;
+        }
+        .parts-group input[type="radio"] { display: none; }
+        .radio-group input[type="radio"] { display: none; }
+        .step {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-left: 4px solid #1565c0;
+            border-radius: 0 4px 4px 0;
+        }
+        .step h3 { color: #1565c0; margin-bottom: 8px; }
+        .formula {
+            font-family: 'Courier New', monospace;
+            background: #e8eaf6;
+            padding: 8px 12px;
+            border-radius: 4px;
+            margin: 6px 0;
+            font-size: 0.9em;
+            white-space: pre-wrap;
+        }
+        .result-value {
+            font-weight: 700;
+            color: #2e7d32;
+            font-size: 1.1em;
+        }
+        .final-result {
+            background: #e8f5e9;
+            border: 2px solid #4caf50;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            margin-top: 20px;
+        }
+        .final-result .big-number {
+            font-size: 2.5em;
+            font-weight: 700;
+            color: #2e7d32;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+        .btn-export {
+            background: #1565c0;
+            color: white;
+            margin-top: 15px;
+        }
+        .btn-export:hover { background: #0d47a1; }
+        .note {
+            font-size: 0.85em;
+            color: #666;
+            font-style: italic;
+            margin-top: 5px;
+        }
+        table.summary {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        table.summary td, table.summary th {
+            padding: 8px 12px;
+            border: 1px solid #dee2e6;
+            text-align: left;
+        }
+        table.summary th { background: #e3f2fd; }
+        table.summary tr:nth-child(even) { background: #f8f9fa; }
+        .alert {
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            border-left: 5px solid;
+            font-size: 0.95em;
+        }
+        .alert-warning { background: #fff8e1; border-color: #f9a825; color: #6d4c00; }
+        .alert-danger  { background: #ffebee; border-color: #c62828; color: #8b0000; }
+        .alert-info    { background: #e3f2fd; border-color: #1565c0; color: #0d3c70; }
+        .alert-ok      { background: #e8f5e9; border-color: #2e7d32; color: #1b4d20; }
+        .alert b { display: block; margin-bottom: 4px; }
+        .compare-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        .compare-table th, .compare-table td { padding: 10px; border: 1px solid #dee2e6; text-align: right; }
+        .compare-table th { background: #e3f2fd; text-align: center; }
+        .compare-table td:first-child { text-align: left; font-weight: 600; }
+        .compare-table .highlight { background: #e8f5e9; font-weight: 700; }
+        .compare-table .delta-pos { color: #2e7d32; font-weight: 700; }
+        .compare-table .delta-neg { color: #c62828; font-weight: 700; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Calculateur TJM → Revenu Net Mensuel</h1>
+        <p class="subtitle">Micro-Entrepreneur BNC — Autres prestations de services — Barème 2026 (revenus 2025)</p>
+
+        <!-- SECTION 1: INPUTS -->
+        <div class="section">
+            <h2>1. Paramètres d'entrée</h2>
+            <div class="input-group">
+                <label for="tjm">TJM (Taux Journalier Moyen) :</label>
+                <input type="number" id="tjm" value="600" min="0" step="10"> €
+            </div>
+            <div class="input-group">
+                <label for="days">Nombre de jours travaillés / mois :</label>
+                <input type="number" id="days" value="20" min="0" max="31" step="0.5">
+            </div>
+            <div class="input-group">
+                <label>Première année (ACRE) :</label>
+                <div class="radio-group">
+                    <label><input type="radio" name="acre" value="yes"><span>Première année (ACRE)</span></label>
+                    <label><input type="radio" name="acre" value="no" checked><span>Pas première année</span></label>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 2: PARTS FISCALES -->
+        <div class="section">
+            <h2>2. Parts fiscales du foyer</h2>
+            <p style="margin-bottom:10px;">Sélectionnez le nombre de parts : (1 = célibataire, 2 = marié/pacsé, +0.5 par enfant...)</p>
+            <div class="parts-group" id="partsGroup">
+                <label><input type="radio" name="parts" value="1" checked><span>1</span></label>
+                <label><input type="radio" name="parts" value="1.5"><span>1.5</span></label>
+                <label><input type="radio" name="parts" value="2"><span>2</span></label>
+                <label><input type="radio" name="parts" value="2.5"><span>2.5</span></label>
+                <label><input type="radio" name="parts" value="3"><span>3</span></label>
+                <label><input type="radio" name="parts" value="3.5"><span>3.5</span></label>
+                <label><input type="radio" name="parts" value="4"><span>4</span></label>
+                <label><input type="radio" name="parts" value="4.5"><span>4.5</span></label>
+                <label><input type="radio" name="parts" value="5"><span>5</span></label>
+            </div>
+        </div>
+
+        <!-- SECTION 3: RESULTS -->
+        <div class="section">
+            <h2>3. Détail des calculs</h2>
+            <div id="calcDetails"></div>
+        </div>
+
+        <!-- FINAL RESULT -->
+        <div class="final-result">
+            <div>Revenu net mensuel moyen après impôt</div>
+            <div class="big-number" id="finalResult">—</div>
+        </div>
+
+        <!-- ALERTS -->
+        <div class="section" id="alertsSection">
+            <h2>⚠️ Alertes & vérifications</h2>
+            <div id="alertsContent"></div>
+        </div>
+
+        <!-- COMPARISON YEAR 1 vs YEAR 2 -->
+        <div class="section">
+            <h2>📊 Comparaison Année 1 (avec ACRE) vs Année 2 (sans ACRE)</h2>
+            <p class="note" style="margin-bottom:10px;">Simulation à CA constant pour visualiser l'effet de la fin de l'ACRE.</p>
+            <table class="compare-table" id="compareTable"></table>
+        </div>
+
+        <!-- SUMMARY TABLE -->
+        <div class="section">
+            <h2>4. Récapitulatif annuel (scénario sélectionné)</h2>
+            <table class="summary" id="summaryTable">
+                <tr><th>Élément</th><th>Montant annuel</th><th>Montant mensuel</th></tr>
+            </table>
+        </div>
+
+        <!-- EXPORT -->
+        <div class="section" style="text-align:center;">
+            <button class="btn btn-export" onclick="exportCSV()">📥 Export CSV</button>
+            <p class="note">Séparateur : « ; » | Décimale : « . » | Encodage : UTF-8</p>
+        </div>
+
+        <!-- SOURCES -->
+        <div class="section">
+            <h2>Sources</h2>
+            <ul style="padding-left:20px;">
+                <li>Cotisations sociales BNC 2026 : 25.6% (<a href="https://www.economie.gouv.fr/entreprises/gerer-sa-micro-entreprise/micro-entreprises-quel-est-le-montant-de-vos-cotisations-sociales" target="_blank">economie.gouv.fr</a>)</li>
+                <li>ACRE première année : 12.8% (<a href="https://entreprendre.service-public.gouv.fr/vosdroits/F11677" target="_blank">service-public.fr</a>)</li>
+                <li>Barème impôt 2026 (revenus 2025) : <a href="https://www.economie.gouv.fr/particuliers/impots-et-fiscalite/gerer-mon-impot-sur-le-revenu/comment-calculer-votre-impot-dapres-le-bareme-de-limpot-sur-le-revenu" target="_blank">economie.gouv.fr</a></li>
+                <li>CFP prestation de services : 0.2%</li>
+                <li>Abattement micro-BNC : 34% (minimum 305€)</li>
+                <li>Plafond micro-entreprise services 2026 : <b>83 600 €</b> (<a href="https://www.economie.gouv.fr/entreprises/gerer-sa-micro-entreprise/micro-entreprises-quel-est-le-montant-de-vos-cotisations-sociales" target="_blank">economie.gouv.fr</a>)</li>
+                <li>Franchise en base de TVA services 2026 : seuil de base <b>37 500 €</b>, seuil majoré <b>41 250 €</b> (<a href="https://entreprendre.service-public.gouv.fr/vosdroits/F21746" target="_blank">service-public.fr</a>)</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+    // ===== CONSTANTS =====
+    const SOCIAL_RATE_NORMAL = 0.256;   // 25.6% BNC 2026
+    const SOCIAL_RATE_ACRE = 0.128;     // 12.8% with ACRE
+    const CFP_RATE = 0.002;             // 0.2%
+    const ABATTEMENT_BNC = 0.34;        // 34%
+    const ABATTEMENT_MIN = 305;         // minimum 305€
+
+    // Thresholds 2026
+    const PLAFOND_MICRO_SERVICES = 83600;       // micro-entreprise BNC/services
+    const TVA_FRANCHISE_BASE = 37500;           // seuil de base franchise TVA services
+    const TVA_FRANCHISE_MAJORE = 41250;         // seuil majoré
+
+    // Tax brackets 2026 (on 2025 income)
+    const BRACKETS = [
+        { limit: 11600, rate: 0.00 },
+        { limit: 29579, rate: 0.11 },
+        { limit: 84577, rate: 0.30 },
+        { limit: 181917, rate: 0.41 },
+        { limit: Infinity, rate: 0.45 }
+    ];
+
+    // Decote thresholds 2026
+    const DECOTE_SINGLE_THRESHOLD = 1982;
+    const DECOTE_SINGLE_FIXED = 897;
+    const DECOTE_COUPLE_THRESHOLD = 3277;
+    const DECOTE_COUPLE_FIXED = 1483;
+    const DECOTE_RATE = 0.4525;
+
+    // ===== LOCAL STORAGE =====
+    function saveInputs() {
+        const data = {
+            tjm: document.getElementById('tjm').value,
+            days: document.getElementById('days').value,
+            acre: document.querySelector('input[name="acre"]:checked').value,
+            parts: document.querySelector('input[name="parts"]:checked').value
+        };
+        localStorage.setItem('tjm_calculator_inputs', JSON.stringify(data));
+    }
+
+    function loadInputs() {
+        const saved = localStorage.getItem('tjm_calculator_inputs');
+        if (saved) {
+            const data = JSON.parse(saved);
+            document.getElementById('tjm').value = data.tjm || 600;
+            document.getElementById('days').value = data.days || 20;
+            const acreRadio = document.querySelector(`input[name="acre"][value="${data.acre || 'no'}"]`);
+            if (acreRadio) acreRadio.checked = true;
+            const partsRadio = document.querySelector(`input[name="parts"][value="${data.parts || '1'}"]`);
+            if (partsRadio) partsRadio.checked = true;
+        }
+    }
+
+    // ===== TAX CALCULATION =====
+    function computeTaxForOnePart(revenuPerPart) {
+        let tax = 0;
+        let prev = 0;
+        const details = [];
+        for (const bracket of BRACKETS) {
+            const taxableInBracket = Math.max(0, Math.min(revenuPerPart, bracket.limit) - prev);
+            const taxInBracket = taxableInBracket * bracket.rate;
+            tax += taxInBracket;
+            if (taxableInBracket > 0) {
+                details.push({
+                    from: prev,
+                    to: Math.min(revenuPerPart, bracket.limit),
+                    rate: bracket.rate,
+                    amount: taxInBracket
+                });
+            }
+            prev = bracket.limit;
+            if (revenuPerPart <= bracket.limit) break;
+        }
+        return { tax, details };
+    }
+
+    // ===== FULL SCENARIO COMPUTATION (reusable for Y1/Y2) =====
+    function computeScenario(ca, useAcre, parts) {
+        const socialRate = useAcre ? SOCIAL_RATE_ACRE : SOCIAL_RATE_NORMAL;
+        const socialCharges = ca * socialRate;
+        const cfp = ca * CFP_RATE;
+        const totalCharges = socialCharges + cfp;
+
+        const abattement = Math.max(ca * ABATTEMENT_BNC, ABATTEMENT_MIN);
+        const revenuImposable = Math.max(0, ca - abattement);
+
+        const revenuPerPart = revenuImposable / parts;
+        const { tax: taxPerPart, details: taxDetails } = computeTaxForOnePart(revenuPerPart);
+        const grossTax = taxPerPart * parts;
+
+        let decote = 0;
+        let decoteApplies = false;
+        const isCouple = parts >= 2;
+        if (isCouple) {
+            if (grossTax <= DECOTE_COUPLE_THRESHOLD && grossTax > 0) {
+                decote = Math.max(0, DECOTE_COUPLE_FIXED - DECOTE_RATE * grossTax);
+                decoteApplies = true;
+            }
+        } else {
+            if (grossTax <= DECOTE_SINGLE_THRESHOLD && grossTax > 0) {
+                decote = Math.max(0, DECOTE_SINGLE_FIXED - DECOTE_RATE * grossTax);
+                decoteApplies = true;
+            }
+        }
+        const finalTax = Math.max(0, grossTax - decote);
+        const annualNet = ca - totalCharges - finalTax;
+        const monthlyNet = annualNet / 12;
+
+        return { ca, useAcre, parts, socialRate, socialCharges, cfp, totalCharges,
+                 abattement, revenuImposable, revenuPerPart, taxDetails, taxPerPart,
+                 grossTax, decote, decoteApplies, isCouple, finalTax, annualNet, monthlyNet };
+    }
+
+    // ===== MAIN CALCULATION =====
+    function calculate() {
+        const tjm = parseFloat(document.getElementById('tjm').value) || 0;
+        const days = parseFloat(document.getElementById('days').value) || 0;
+        const isAcre = document.querySelector('input[name="acre"]:checked').value === 'yes';
+        const parts = parseFloat(document.querySelector('input[name="parts"]:checked').value);
+
+        // Step 1: CA
+        const ca = tjm * days * 12;
+
+        // Compute selected scenario via helper
+        const s = computeScenario(ca, isAcre, parts);
+        const { socialRate, socialCharges, cfp, totalCharges, abattement, revenuImposable,
+                revenuPerPart, taxDetails, taxPerPart, grossTax, decote, decoteApplies,
+                isCouple, finalTax, annualNet, monthlyNet } = s;
+
+        // ===== DISPLAY DETAILS =====
+        let html = '';
+
+        // Step 1
+        html += `<div class="step"><h3>Étape 1 : Chiffre d'Affaires Annuel</h3>`;
+        html += `<div class="formula">CA = TJM × Jours/mois × 12\nCA = ${fmt(tjm)} € × ${days} × 12</div>`;
+        html += `<p>CA = <span class="result-value">${fmt(ca)} €</span></p></div>`;
+
+        // Step 2
+        html += `<div class="step"><h3>Étape 2 : Cotisations Sociales</h3>`;
+        html += `<div class="formula">Taux cotisations sociales (BNC 2026${isAcre ? ', ACRE' : ''}) = ${(socialRate * 100).toFixed(1)}%\n`;
+        html += `Cotisations sociales = CA × ${(socialRate * 100).toFixed(1)}% = ${fmt(ca)} × ${socialRate} = ${fmt(socialCharges)} €\n\n`;
+        html += `CFP (Contribution Formation Pro) = CA × 0.2% = ${fmt(ca)} × 0.002 = ${fmt(cfp)} €\n\n`;
+        html += `Total charges = ${fmt(socialCharges)} + ${fmt(cfp)} = ${fmt(totalCharges)} €</div>`;
+        html += `<p>Total charges annuelles = <span class="result-value">${fmt(totalCharges)} €</span></p></div>`;
+
+        // Step 3
+        html += `<div class="step"><h3>Étape 3 : Revenu Net Imposable</h3>`;
+        html += `<div class="formula">Abattement micro-BNC = 34% du CA (minimum 305€)\n`;
+        html += `Abattement = max(${fmt(ca)} × 34%, 305) = max(${fmt(ca * 0.34)}, 305) = ${fmt(abattement)} €\n\n`;
+        html += `Revenu net imposable = CA - Abattement = ${fmt(ca)} - ${fmt(abattement)} = ${fmt(revenuImposable)} €</div>`;
+        html += `<p>Revenu net imposable = <span class="result-value">${fmt(revenuImposable)} €</span></p>`;
+        html += `<p class="note">Note : L'abattement de 34% est forfaitaire pour le calcul fiscal. Les cotisations réelles (étape 2) sont déduites séparément pour le calcul du revenu effectif.</p></div>`;
+
+        // Step 4
+        html += `<div class="step"><h3>Étape 4 : Impôt sur le Revenu (Barème 2026)</h3>`;
+        html += `<div class="formula">Quotient familial = Revenu imposable / Parts = ${fmt(revenuImposable)} / ${parts} = ${fmt(revenuPerPart)} €\n\n`;
+        html += `Application du barème progressif sur ${fmt(revenuPerPart)} € :\n`;
+        let prevLimit = 0;
+        for (const d of taxDetails) {
+            const tranche = d.to - d.from;
+            html += `  • ${fmt(d.from)}€ → ${fmt(d.to)}€ : ${tranche.toFixed(2)} × ${(d.rate * 100)}% = ${fmt(d.amount)} €\n`;
+        }
+        html += `\nImpôt par part = ${fmt(taxPerPart)} €\n`;
+        html += `Impôt brut = ${fmt(taxPerPart)} × ${parts} parts = ${fmt(grossTax)} €</div>`;
+        html += `<p>Impôt brut = <span class="result-value">${fmt(grossTax)} €</span></p></div>`;
+
+        // Step 5
+        html += `<div class="step"><h3>Étape 5 : Décote</h3>`;
+        if (decoteApplies) {
+            if (isCouple) {
+                html += `<div class="formula">Couple (parts ≥ 2) : impôt brut (${fmt(grossTax)}€) ≤ seuil (${fmt(DECOTE_COUPLE_THRESHOLD)}€)\n`;
+                html += `Décote = ${DECOTE_COUPLE_FIXED} - 45.25% × ${fmt(grossTax)} = ${DECOTE_COUPLE_FIXED} - ${fmt(DECOTE_RATE * grossTax)} = ${fmt(decote)} €</div>`;
+            } else {
+                html += `<div class="formula">Célibataire (parts < 2) : impôt brut (${fmt(grossTax)}€) ≤ seuil (${fmt(DECOTE_SINGLE_THRESHOLD)}€)\n`;
+                html += `Décote = ${DECOTE_SINGLE_FIXED} - 45.25% × ${fmt(grossTax)} = ${DECOTE_SINGLE_FIXED} - ${fmt(DECOTE_RATE * grossTax)} = ${fmt(decote)} €</div>`;
+            }
+            html += `<p>Impôt après décote = ${fmt(grossTax)} - ${fmt(decote)} = <span class="result-value">${fmt(finalTax)} €</span></p>`;
+        } else {
+            if (grossTax === 0) {
+                html += `<div class="formula">Pas d'impôt brut → pas de décote applicable.</div>`;
+            } else {
+                const threshold = isCouple ? DECOTE_COUPLE_THRESHOLD : DECOTE_SINGLE_THRESHOLD;
+                html += `<div class="formula">Impôt brut (${fmt(grossTax)}€) > seuil décote (${fmt(threshold)}€)\n→ Pas de décote applicable.</div>`;
+            }
+            html += `<p>Impôt final = <span class="result-value">${fmt(finalTax)} €</span></p>`;
+        }
+        html += `</div>`;
+
+        // Step 6
+        html += `<div class="step"><h3>Étape 6 : Revenu Net Annuel et Mensuel</h3>`;
+        html += `<div class="formula">Revenu net annuel = CA - Total charges - Impôt\n`;
+        html += `= ${fmt(ca)} - ${fmt(totalCharges)} - ${fmt(finalTax)}\n`;
+        html += `= ${fmt(annualNet)} €\n\n`;
+        html += `Revenu net mensuel = ${fmt(annualNet)} / 12 = ${fmt(monthlyNet)} €</div>`;
+        html += `<p>Revenu net mensuel = <span class="result-value">${fmt(monthlyNet)} € / mois</span></p></div>`;
+
+        document.getElementById('calcDetails').innerHTML = html;
+        document.getElementById('finalResult').textContent = fmt(monthlyNet) + ' € / mois';
+
+        // Summary table
+        const summaryRows = [
+            ['Chiffre d\'affaires', ca, ca / 12],
+            ['Cotisations sociales (' + (socialRate * 100).toFixed(1) + '%)', -socialCharges, -socialCharges / 12],
+            ['CFP (0.2%)', -cfp, -cfp / 12],
+            ['Impôt sur le revenu', -finalTax, -finalTax / 12],
+            ['<strong>Revenu net</strong>', annualNet, monthlyNet]
+        ];
+        let tableHtml = '<tr><th>Élément</th><th>Annuel</th><th>Mensuel</th></tr>';
+        for (const row of summaryRows) {
+            const style = row[0].includes('strong') ? 'font-weight:700;background:#e8f5e9;' : '';
+            tableHtml += `<tr style="${style}"><td>${row[0]}</td><td>${fmt(row[1])} €</td><td>${fmt(row[2])} €</td></tr>`;
+        }
+        document.getElementById('summaryTable').innerHTML = tableHtml;
+
+        // ===== ALERTS =====
+        renderAlerts(ca, isAcre);
+
+        // ===== YEAR 1 vs YEAR 2 COMPARISON =====
+        renderComparison(ca, parts);
+
+        // Save inputs
+        saveInputs();
+
+        // Store data for CSV export
+        window._calcData = { tjm, days, isAcre, parts, ca, socialRate, socialCharges, cfp, totalCharges, abattement, revenuImposable, revenuPerPart, grossTax, decote, finalTax, annualNet, monthlyNet };
+    }
+
+    // ===== ALERTS =====
+    function renderAlerts(ca, isAcre) {
+        const alerts = [];
+
+        // Plafond micro-entreprise services
+        if (ca > PLAFOND_MICRO_SERVICES) {
+            alerts.push({
+                level: 'danger',
+                title: '🚨 Plafond micro-entreprise dépassé',
+                msg: `Votre CA annuel (${fmt(ca)} €) dépasse le plafond 2026 des prestations de services (<b>${fmt(PLAFOND_MICRO_SERVICES)} €</b>).<br>` +
+                     `→ En cas de dépassement deux années consécutives, vous sortez du régime micro et basculez en régime réel (BNC déclaration contrôlée) ou devez créer une société (EURL/SASU).<br>` +
+                     `→ <b>Tolérance la 1ʳᵉ année d'activité</b> : pas de sortie immédiate, mais à anticiper dès l'année suivante.`
+            });
+        } else if (ca > PLAFOND_MICRO_SERVICES * 0.9) {
+            alerts.push({
+                level: 'warning',
+                title: '⚠️ Proche du plafond micro-entreprise',
+                msg: `Votre CA (${fmt(ca)} €) approche du plafond services 2026 (${fmt(PLAFOND_MICRO_SERVICES)} €). À surveiller.`
+            });
+        }
+
+        // Franchise TVA
+        if (ca > TVA_FRANCHISE_MAJORE) {
+            alerts.push({
+                level: 'warning',
+                title: '💶 TVA obligatoire (seuil majoré dépassé)',
+                msg: `Votre CA (${fmt(ca)} €) dépasse le seuil majoré de franchise TVA services (<b>${fmt(TVA_FRANCHISE_MAJORE)} €</b>).<br>` +
+                     `→ Vous devez <b>facturer la TVA (20%)</b> dès le 1ᵉʳ jour du mois de dépassement.<br>` +
+                     `→ <b>Impact sur votre net : neutre.</b> Vous facturez HT + 20% TVA, mais reversez la TVA à l'État. Le client paye plus, vous gardez le même HT.<br>` +
+                     `→ Si vos clients sont des entreprises (B2B), elles récupèrent la TVA → totalement transparent.`
+            });
+        } else if (ca > TVA_FRANCHISE_BASE) {
+            alerts.push({
+                level: 'info',
+                title: '💶 Vigilance TVA (entre seuil de base et seuil majoré)',
+                msg: `Votre CA (${fmt(ca)} €) dépasse le seuil de base TVA (${fmt(TVA_FRANCHISE_BASE)} €) mais reste sous le seuil majoré (${fmt(TVA_FRANCHISE_MAJORE)} €).<br>` +
+                     `→ Vous restez en franchise TVA cette année, mais y serez assujetti l'année suivante.`
+            });
+        } else {
+            alerts.push({
+                level: 'ok',
+                title: '✅ Franchise en base de TVA applicable',
+                msg: `Votre CA (${fmt(ca)} €) est sous le seuil de base TVA services (${fmt(TVA_FRANCHISE_BASE)} €). <b>Pas de TVA à facturer ni à reverser.</b><br>` +
+                     `<i>Note : le TJM saisi est HT (hors taxes). En franchise, HT = TTC car aucune TVA n'est ajoutée.</i>`
+            });
+        }
+
+        // ACRE info
+        if (isAcre) {
+            alerts.push({
+                level: 'info',
+                title: 'ℹ️ ACRE — Précisions importantes',
+                msg: `L'ACRE micro-entrepreneur applique un <b>taux plat à 50%</b> du taux normal (12,8% au lieu de 25,6%) <b>sans dégressivité selon le PASS</b> (la dégressivité concerne les TNS classiques, pas les micro).<br>` +
+                     `→ Durée : jusqu'à la fin du <b>3ᵉ trimestre civil</b> suivant le début d'activité (donc 9 à 12 mois selon la date de démarrage).<br>` +
+                     `→ <b>À partir du 1ᵉʳ juillet 2026</b> : la réduction passera de 50% à 25% (taux ACRE = 19,2% pour BNC).`
+            });
+        }
+
+        const colorMap = { danger: 'alert-danger', warning: 'alert-warning', info: 'alert-info', ok: 'alert-ok' };
+        const html = alerts.map(a =>
+            `<div class="alert ${colorMap[a.level]}"><b>${a.title}</b>${a.msg}</div>`
+        ).join('');
+        document.getElementById('alertsContent').innerHTML = html || '<p>Aucune alerte.</p>';
+    }
+
+    // ===== COMPARISON YEAR 1 (ACRE) vs YEAR 2 (no ACRE) =====
+    function renderComparison(ca, parts) {
+        const y1 = computeScenario(ca, true, parts);   // with ACRE
+        const y2 = computeScenario(ca, false, parts);  // without ACRE
+        const deltaAnnual = y2.annualNet - y1.annualNet;
+        const deltaMonthly = y2.monthlyNet - y1.monthlyNet;
+
+        const rows = [
+            ['Chiffre d\'affaires (HT)', y1.ca, y2.ca, false],
+            ['Taux cotisations sociales', (y1.socialRate * 100).toFixed(1) + ' %', (y2.socialRate * 100).toFixed(1) + ' %', true],
+            ['Cotisations sociales', y1.socialCharges, y2.socialCharges, false],
+            ['CFP', y1.cfp, y2.cfp, false],
+            ['Impôt sur le revenu', y1.finalTax, y2.finalTax, false],
+            ['<b>Revenu net annuel</b>', y1.annualNet, y2.annualNet, false, true],
+            ['<b>Revenu net mensuel</b>', y1.monthlyNet, y2.monthlyNet, false, true]
+        ];
+
+        let h = `<thead><tr><th>Poste</th><th>Année 1 (ACRE 12,8%)</th><th>Année 2+ (25,6%)</th></tr></thead><tbody>`;
+        for (const [label, v1, v2, isText, highlight] of rows) {
+            const cls = highlight ? ' class="highlight"' : '';
+            const f = isText ? (x) => x : (x) => fmt(x) + ' €';
+            h += `<tr${cls}><td>${label}</td><td>${f(v1)}</td><td>${f(v2)}</td></tr>`;
+        }
+        const deltaCls = deltaAnnual >= 0 ? 'delta-pos' : 'delta-neg';
+        const sign = deltaAnnual >= 0 ? '+' : '';
+        h += `<tr><td><b>Différence (Année 2 − Année 1)</b></td>` +
+             `<td colspan="2" class="${deltaCls}">${sign}${fmt(deltaAnnual)} €/an  &nbsp;|&nbsp;  ${sign}${fmt(deltaMonthly)} €/mois</td></tr>`;
+        h += `</tbody>`;
+        document.getElementById('compareTable').innerHTML = h;
+    }
+
+    // ===== FORMAT NUMBER =====
+    function fmt(n) {
+        return n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+    }
+
+    // ===== CSV EXPORT =====
+    function exportCSV() {
+        const d = window._calcData;
+        if (!d) return;
+
+        const lines = [
+            ['Element', 'Valeur', 'Unite'],
+            ['TJM', d.tjm.toFixed(2), 'EUR/jour'],
+            ['Jours par mois', d.days.toFixed(2), 'jours'],
+            ['ACRE premiere annee', d.isAcre ? 'Oui' : 'Non', ''],
+            ['Parts fiscales', d.parts.toFixed(1), 'parts'],
+            ['', '', ''],
+            ['Chiffre affaires annuel', d.ca.toFixed(2), 'EUR'],
+            ['Taux cotisations sociales', (d.socialRate * 100).toFixed(1), '%'],
+            ['Cotisations sociales', d.socialCharges.toFixed(2), 'EUR'],
+            ['CFP (0.2%)', d.cfp.toFixed(2), 'EUR'],
+            ['Total charges', d.totalCharges.toFixed(2), 'EUR'],
+            ['', '', ''],
+            ['Abattement BNC (34%)', d.abattement.toFixed(2), 'EUR'],
+            ['Revenu net imposable', d.revenuImposable.toFixed(2), 'EUR'],
+            ['Quotient familial (par part)', d.revenuPerPart.toFixed(2), 'EUR'],
+            ['Impot brut', d.grossTax.toFixed(2), 'EUR'],
+            ['Decote', d.decote.toFixed(2), 'EUR'],
+            ['Impot final', d.finalTax.toFixed(2), 'EUR'],
+            ['', '', ''],
+            ['Revenu net annuel', d.annualNet.toFixed(2), 'EUR'],
+            ['Revenu net mensuel', d.monthlyNet.toFixed(2), 'EUR']
+        ];
+
+        const csv = lines.map(row => row.join(';')).join('\n');
+        const BOM = '\uFEFF';
+        const blob = new Blob([BOM + csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'tjm_simulation.csv';
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    // ===== EVENT LISTENERS =====
+    document.getElementById('tjm').addEventListener('input', calculate);
+    document.getElementById('days').addEventListener('input', calculate);
+    document.querySelectorAll('input[name="acre"]').forEach(r => r.addEventListener('change', calculate));
+    document.querySelectorAll('input[name="parts"]').forEach(r => r.addEventListener('change', calculate));
+
+    // ===== INIT =====
+    window.addEventListener('load', function() {
+        loadInputs();
+        calculate();
+    });
+    </script>
+</body>
+</html>

@@ -1,0 +1,4 @@
+C = 1uF
+R = 460
+Rpot = 50k
+pin pwm 26 100kHz 
