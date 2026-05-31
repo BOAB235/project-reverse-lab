@@ -1,0 +1,610 @@
+(kicad_sch
+	(version 20260306)
+	(generator "eeschema")
+	(generator_version "10.0")
+	(uuid "3f8168e8-0e18-4aa8-8729-5e309420f674")
+	(paper "A5")
+	(title_block
+		(title "Reverse Engineering Delta Power Supply DPS-1125ABA, Rev 05")
+		(date "2026-05-31")
+		(company "Abdelaziz BOUZIANI")
+	)
+	(lib_symbols)
+	(text "GND"
+		(exclude_from_sim no)
+		(at 185.928 55.626 0)
+		(effects
+			(font
+				(size 2.54 2.54)
+				(thickness 0.762)
+				(bold yes)
+				(color 0 132 132 1)
+			)
+		)
+		(uuid "0c41814f-f4e0-43d5-8199-74fcb74b536e")
+	)
+	(text "Lr\n"
+		(exclude_from_sim no)
+		(at 86.36 45.212 0)
+		(effects
+			(font
+				(size 2.54 2.54)
+				(thickness 0.762)
+				(bold yes)
+				(color 0 132 132 1)
+			)
+		)
+		(uuid "1d06f51e-b553-4743-935a-5f4e87b46282")
+	)
+	(text "12.2V\n"
+		(exclude_from_sim no)
+		(at 187.198 46.99 0)
+		(effects
+			(font
+				(size 2.54 2.54)
+				(thickness 0.762)
+				(bold yes)
+				(color 0 132 132 1)
+			)
+		)
+		(uuid "4c1bb704-c2e2-40ab-a618-615b158dc1bf")
+	)
+	(text "Nr"
+		(exclude_from_sim no)
+		(at 86.614 54.102 0)
+		(effects
+			(font
+				(size 2.54 2.54)
+				(thickness 0.762)
+				(bold yes)
+				(color 0 132 132 1)
+			)
+		)
+		(uuid "4c85cea7-d78f-4ac0-9f7c-0245c1a345c8")
+	)
+	(text ""
+		(exclude_from_sim no)
+		(at 138.938 82.296 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+				(thickness 0.254)
+				(bold yes)
+			)
+		)
+		(uuid "54fbac83-d28f-4560-9e27-fbf250feb324")
+	)
+	(text "N"
+		(exclude_from_sim no)
+		(at 36.068 57.15 0)
+		(effects
+			(font
+				(size 2.54 2.54)
+				(thickness 0.762)
+				(bold yes)
+				(color 0 132 132 1)
+			)
+		)
+		(uuid "777efa66-187a-4837-bba7-a27b06775206")
+	)
+	(text "11VSB\n"
+		(exclude_from_sim no)
+		(at 157.48 74.422 0)
+		(effects
+			(font
+				(size 2.032 2.032)
+				(thickness 0.508)
+				(bold yes)
+			)
+		)
+		(uuid "7988f272-b2a8-4917-adec-dcb0b8f0c09b")
+	)
+	(text "15V/HVN"
+		(exclude_from_sim no)
+		(at 100.584 74.676 0)
+		(effects
+			(font
+				(size 2.032 2.032)
+				(thickness 0.254)
+				(bold yes)
+			)
+		)
+		(uuid "c5ce0069-bffb-4e47-9dfe-de6f37164e61")
+	)
+	(text "HVP"
+		(exclude_from_sim no)
+		(at 123.952 44.704 0)
+		(effects
+			(font
+				(size 2.54 2.54)
+				(thickness 0.762)
+				(bold yes)
+				(color 0 132 132 1)
+			)
+		)
+		(uuid "d30b865d-aba4-4b6d-96db-77ef32122b93")
+	)
+	(text "HVN"
+		(exclude_from_sim no)
+		(at 125.73 53.594 0)
+		(effects
+			(font
+				(size 2.54 2.54)
+				(thickness 0.762)
+				(bold yes)
+				(color 0 132 132 1)
+			)
+		)
+		(uuid "d3ccabf3-2a86-48e5-abe1-96f367f5a9e0")
+	)
+	(text "GND"
+		(exclude_from_sim no)
+		(at 157.734 80.772 0)
+		(effects
+			(font
+				(size 2.032 2.032)
+				(thickness 0.508)
+				(bold yes)
+			)
+		)
+		(uuid "d84a3cad-c0f2-419f-a782-b5845f903ff0")
+	)
+	(text "PE"
+		(exclude_from_sim no)
+		(at 35.814 52.07 0)
+		(effects
+			(font
+				(size 2.54 2.54)
+				(thickness 0.762)
+				(bold yes)
+				(color 0 132 132 1)
+			)
+		)
+		(uuid "dd506159-e111-460a-85b0-dd44633fc01a")
+	)
+	(text "L"
+		(exclude_from_sim no)
+		(at 36.576 47.244 0)
+		(effects
+			(font
+				(size 2.54 2.54)
+				(thickness 0.762)
+				(bold yes)
+				(color 0 132 132 1)
+			)
+		)
+		(uuid "f3538d17-3a6e-4166-bdba-cc6a54c464eb")
+	)
+	(junction
+		(at 139.7 55.88)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "25553981-fc06-4724-a7f0-550472c8f988")
+	)
+	(junction
+		(at 134.62 46.99)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "c23b2823-0718-4795-9cdb-ef183943ec72")
+	)
+	(bus
+		(pts
+			(xy 139.7 55.88) (xy 151.13 55.88)
+		)
+		(stroke
+			(width 0)
+			(type default)
+			(color 0 0 0 1)
+		)
+		(uuid "0a7a675e-f52e-46f3-b90f-8a7a77a2dd7b")
+	)
+	(bus
+		(pts
+			(xy 175.26 55.88) (xy 181.61 55.88)
+		)
+		(stroke
+			(width 0)
+			(type default)
+			(color 132 132 132 1)
+		)
+		(uuid "1102c39f-5578-4292-b111-6f6c12b22ba0")
+	)
+	(bus
+		(pts
+			(xy 38.1 52.07) (xy 44.45 52.07)
+		)
+		(stroke
+			(width 0)
+			(type default)
+			(color 0 194 0 1)
+		)
+		(uuid "12af9472-2465-4cf9-941c-810d99027ba8")
+	)
+	(wire
+		(pts
+			(xy 160.02 72.39) (xy 151.13 72.39)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "16772b57-c261-450a-b926-a16eb19e722a")
+	)
+	(bus
+		(pts
+			(xy 118.11 46.99) (xy 134.62 46.99)
+		)
+		(stroke
+			(width 0)
+			(type default)
+			(color 194 0 0 1)
+		)
+		(uuid "1c16c7cc-7972-40f7-a2fc-8acdff796209")
+	)
+	(wire
+		(pts
+			(xy 160.02 63.5) (xy 166.37 63.5)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "561bc0d4-2994-4862-bbce-da94e0b7e845")
+	)
+	(bus
+		(pts
+			(xy 134.62 46.99) (xy 134.62 68.58)
+		)
+		(stroke
+			(width 0)
+			(type default)
+			(color 194 0 0 1)
+		)
+		(uuid "5e4db990-ac3d-4fb9-bb5d-803d01d6b517")
+	)
+	(wire
+		(pts
+			(xy 166.37 78.74) (xy 166.37 63.5)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "71296e7e-d12d-4082-b591-86b5811301f8")
+	)
+	(bus
+		(pts
+			(xy 38.1 46.99) (xy 44.45 46.99)
+		)
+		(stroke
+			(width 0)
+			(type default)
+			(color 128 77 0 1)
+		)
+		(uuid "826896bf-6ea2-4bbb-877b-fbf57ddaef8c")
+	)
+	(bus
+		(pts
+			(xy 139.7 55.88) (xy 139.7 68.58)
+		)
+		(stroke
+			(width 0)
+			(type default)
+			(color 0 0 0 1)
+		)
+		(uuid "8bc66058-0a68-4550-9eb4-c0a37000898a")
+	)
+	(bus
+		(pts
+			(xy 118.11 55.88) (xy 139.7 55.88)
+		)
+		(stroke
+			(width 0)
+			(type default)
+			(color 0 0 0 1)
+		)
+		(uuid "8f08283a-8db0-48f0-aa57-74544eddd18c")
+	)
+	(bus
+		(pts
+			(xy 38.1 57.15) (xy 44.45 57.15)
+		)
+		(stroke
+			(width 0)
+			(type default)
+			(color 0 0 255 1)
+		)
+		(uuid "954869b3-acdb-4d0c-b7c8-40a4c33ee3c7")
+	)
+	(wire
+		(pts
+			(xy 151.13 78.74) (xy 166.37 78.74)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "9e29eec3-6f6d-49dd-bdae-8e87c9b29cd7")
+	)
+	(bus
+		(pts
+			(xy 134.62 46.99) (xy 151.13 46.99)
+		)
+		(stroke
+			(width 0)
+			(type default)
+			(color 194 0 0 1)
+		)
+		(uuid "a2518cb8-1eab-4596-bb9c-f9d0c6655436")
+	)
+	(bus
+		(pts
+			(xy 175.26 46.99) (xy 181.61 46.99)
+		)
+		(stroke
+			(width 0)
+			(type default)
+			(color 204 102 0 1)
+		)
+		(uuid "a468f05a-27ce-48c5-90f3-01826daa8f1e")
+	)
+	(wire
+		(pts
+			(xy 107.95 72.39) (xy 101.6 72.39)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "a7aa5816-b4aa-4080-a807-cb267be67c99")
+	)
+	(wire
+		(pts
+			(xy 151.13 72.39) (xy 151.13 78.74)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "cb6dfd7e-db99-4f20-a41a-69c502becf6c")
+	)
+	(bus
+		(pts
+			(xy 81.28 46.99) (xy 95.25 46.99)
+		)
+		(stroke
+			(width 0)
+			(type default)
+			(color 128 77 0 1)
+		)
+		(uuid "d9147d62-c570-4371-9bd4-720d0414f918")
+	)
+	(wire
+		(pts
+			(xy 101.6 62.23) (xy 101.6 72.39)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "e7804b84-a8ab-4eb6-81e4-e13941997d22")
+	)
+	(bus
+		(pts
+			(xy 81.28 55.88) (xy 95.25 55.88)
+		)
+		(stroke
+			(width 0)
+			(type default)
+			(color 0 0 255 1)
+		)
+		(uuid "ec83d4a9-3b94-4272-ba12-1151fd82cb5d")
+	)
+	(wire
+		(pts
+			(xy 160.02 63.5) (xy 160.02 72.39)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "f726a959-b79b-4e95-8a62-3822d1ec52bd")
+	)
+	(sheet
+		(at 151.13 41.91)
+		(size 24.13 21.59)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(stroke
+			(width 0.1524)
+			(type solid)
+		)
+		(fill
+			(color 0 132 0 1)
+		)
+		(uuid "00370b41-526c-4fe7-8912-2c6ed82210b4")
+		(property "Sheetname" "DC-DC"
+			(at 151.13 39.9284 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 3.81 3.81)
+					(thickness 0.762)
+					(bold yes)
+				)
+				(justify left bottom)
+			)
+		)
+		(property "Sheetfile" "DC_DC.kicad_sch"
+			(at 151.13 64.0846 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left top)
+			)
+		)
+		(instances
+			(project "Schematics"
+				(path "/3f8168e8-0e18-4aa8-8729-5e309420f674"
+					(page "3")
+				)
+			)
+		)
+	)
+	(sheet
+		(at 107.95 68.58)
+		(size 43.18 15.24)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(stroke
+			(width 0.1524)
+			(type solid)
+		)
+		(fill
+			(color 255 153 0 1)
+		)
+		(uuid "497395ac-c994-45c4-b9e7-ab2f933652b2")
+		(property "Sheetname" "Aux_FlyBack"
+			(at 107.188 92.202 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 3.81 3.81)
+					(thickness 0.762)
+					(bold yes)
+				)
+				(justify left bottom)
+			)
+		)
+		(property "Sheetfile" "Aux_FlyBack.kicad_sch"
+			(at 107.95 84.4046 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left top)
+			)
+		)
+		(instances
+			(project "Schematics"
+				(path "/3f8168e8-0e18-4aa8-8729-5e309420f674"
+					(page "5")
+				)
+			)
+		)
+	)
+	(sheet
+		(at 44.45 41.91)
+		(size 36.83 20.32)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(stroke
+			(width 0.1524)
+			(type solid)
+		)
+		(fill
+			(color 0 194 194 1)
+		)
+		(uuid "e4cf440a-83c7-416e-a758-c3c6b9516795")
+		(property "Sheetname" "EMI_FILTER"
+			(at 44.45 39.9284 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 3.81 3.81)
+					(thickness 0.762)
+					(bold yes)
+				)
+				(justify left bottom)
+			)
+		)
+		(property "Sheetfile" "EMI_FILTER.kicad_sch"
+			(at 44.45 62.8146 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left top)
+			)
+		)
+		(instances
+			(project "Schematics"
+				(path "/3f8168e8-0e18-4aa8-8729-5e309420f674"
+					(page "2")
+				)
+			)
+		)
+	)
+	(sheet
+		(at 95.25 41.91)
+		(size 22.86 20.32)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(stroke
+			(width 0.1524)
+			(type solid)
+		)
+		(fill
+			(color 194 194 0 1)
+		)
+		(uuid "ff802e90-5f0d-4f0c-a4b7-550e44b32ae1")
+		(property "Sheetname" "PFC"
+			(at 95.25 39.9284 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 3.81 3.81)
+					(thickness 0.762)
+					(bold yes)
+				)
+				(justify left bottom)
+			)
+		)
+		(property "Sheetfile" "PFC.kicad_sch"
+			(at 95.25 62.8146 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left top)
+			)
+		)
+		(instances
+			(project "Schematics"
+				(path "/3f8168e8-0e18-4aa8-8729-5e309420f674"
+					(page "4")
+				)
+			)
+		)
+	)
+	(sheet_instances
+		(path "/"
+			(page "1")
+		)
+	)
+	(embedded_fonts no)
+)
