@@ -1,10 +1,27 @@
+-----------------------------
+https://tools.pdf24.org/en/compress-pdf
+
+DPI: 400, Image quality: 90
+==>>>>> 46.97 MB 6.80 MB TOPPP
+
+DPI: 400, Image quality: 100
+46.97 MB 18.77 MB
+
+DPI: 600, Image quality: 100
+46.97 MB 32.28 MB
+
+------------------------------------
+
 https://www.adobe.com/acrobat/online/compress-pdf.html
 Heigh quality 
-46.97MB → 5.21MB OK
+46.97MB → 5.21MB OK But not what i want
 
 
 https://www.ilovepdf.com/fr/compresser_pdf
 HEIGH QUALITY 2MB NOK 
+
+
+
 
 
 
