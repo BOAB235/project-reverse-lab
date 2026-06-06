@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Oscilloscope Capture - TDS3034</title>
+<style>
+  :root {
+    --bg: #f5f7fa; --card:#ffffff; --ink:#1f2933; --muted:#6b7280;
+    --accent:#2563eb; --accent2:#059669; --line:#e5e7eb; --danger:#dc2626;
+    --radius:10px; --shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.04);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#0f172a; --card:#1e293b; --ink:#e2e8f0; --muted:#94a3b8;
+           --line:#334155; --shadow:0 1px 3px rgba(0,0,0,.4); }
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: system-ui, "Segoe UI", Roboto, Arial, sans-serif;
+    background: var(--bg); color: var(--ink);
+    max-width: 980px; margin: 0 auto; padding: 24px 16px 60px;
+    line-height: 1.45;
+  }
+  header { display:flex; align-items:center; gap:12px; margin-bottom:6px; }
+  header h1 { font-size: 22px; margin:0; }
+  .sub { color: var(--muted); font-size: 13px; margin-bottom: 18px; }
+  .card {
+    background: var(--card); border:1px solid var(--line);
+    border-radius: var(--radius); box-shadow: var(--shadow);
+    padding: 16px; margin-bottom: 16px;
+  }
+  .card h2 { font-size: 14px; margin:0 0 12px; text-transform:uppercase;
+             letter-spacing:.04em; color: var(--muted); }
+  .grid { display:grid; gap:12px; grid-template-columns: repeat(auto-fit,minmax(150px,1fr)); }
+  label.field { display:flex; flex-direction:column; gap:4px; font-size:12px; color:var(--muted); }
+  input[type=text]{
+    padding:8px 10px; font-size:14px; color:var(--ink); background:var(--bg);
+    border:1px solid var(--line); border-radius:8px; width:100%;
+  }
+  input[type=text]:focus{ outline:2px solid var(--accent); border-color:var(--accent); }
+  .btns { display:flex; gap:10px; flex-wrap:wrap; }
+  button{
+    font-size:14px; font-weight:600; padding:9px 16px; border-radius:8px;
+    border:1px solid var(--line); background:var(--card); color:var(--ink);
+    cursor:pointer; transition:.15s; display:inline-flex; align-items:center; gap:7px;
+  }
+  button:hover{ border-color:var(--accent); }
+  button:disabled{ opacity:.45; cursor:not-allowed; }
+  button.primary{ background:var(--accent); border-color:var(--accent); color:#fff; }
+  button.primary:hover{ filter:brightness(1.08); }
+  button.green{ background:var(--accent2); border-color:var(--accent2); color:#fff; }
+  button.green:hover{ filter:brightness(1.08); }
+  button.ok{ background:#16a34a; border-color:#16a34a; color:#fff; }
+  button.ok:hover{ filter:brightness(1.08); }
+  button.bad{ background:var(--danger); border-color:var(--danger); color:#fff; }
+  button.bad:hover{ filter:brightness(1.08); }
+  button.ghost{ background:transparent; }
+  .btn-sym{ font-size:15px; line-height:1; }
+  .btn-txt{ white-space:nowrap; }
+  .radio-row, .chk-row{ display:flex; gap:18px; flex-wrap:wrap; align-items:center; }
+  .radio-row label, .chk-row label{ display:flex; gap:6px; align-items:center; font-size:14px; cursor:pointer; }
+  .chk-row.disabled{ opacity:.4; pointer-events:none; }
+  .fname-row{ display:flex; gap:8px; align-items:center; }
+  .fname-row input{ flex:1; font-family:Consolas,monospace; font-size:13px; }
+  .folder-row{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+  .folder-tag{ font-family:Consolas,monospace; font-size:12px; color:var(--accent2);
+               background:rgba(5,150,105,.08); padding:3px 8px; border-radius:6px; }
+  #log{
+    background:#0b1020; color:#5eead4; font-family:Consolas,monospace; font-size:12px;
+    border-radius:8px; padding:12px; height:240px; overflow:auto; white-space:pre-wrap;
+    border:1px solid var(--line);
+  }
+  details{ margin-top:8px; }
+  details summary{ cursor:pointer; font-weight:600; font-size:13px; color:var(--muted); }
+  pre.code{ background:#0b1020; color:#cbd5e1; padding:12px; border-radius:8px;
+            overflow:auto; font-size:12px; font-family:Consolas,monospace; }
+  .copybtn{ float:right; }
+  .hint{ font-size:12px; color:var(--muted); }
+  .dot{ width:10px;height:10px;border-radius:50%;background:#9ca3af;display:inline-block; }
+  .dot.ok{ background:#22c55e; } .dot.err{ background:#ef4444; }
+  .badge{ font-size:11px; padding:2px 8px; border-radius:999px; background:var(--line); color:var(--ink); }
+</style>
+</head>
+<body>
+
+<header>
+  <span style="font-size:26px">📈</span>
+  <h1>Oscilloscope Capture</h1>
+</header>
+<div class="sub">Tektronix TDS3034 over its HTTP server. All settings are remembered in this browser.</div>
+
+<!-- CONNECTION -->
+<div class="card">
+  <h2>Connection</h2>
+  <div class="grid">
+    <label class="field">Scope IP
+      <input type="text" id="ip" placeholder="169.254.104.90" />
+    </label>
+    <label class="field">Subnet mask
+      <input type="text" id="mask" placeholder="255.255.0.0" />
+    </label>
+    <label class="field">HTTP timeout (s)
+      <input type="text" id="timeout" value="10" />
+    </label>
+    <label class="field">Proxy port
+      <input type="text" id="proxyPort" value="8765" />
+    </label>
+  </div>
+  <div class="chk-row" style="margin-top:12px">
+    <label><input type="checkbox" id="useProxy" checked> Use local proxy (needed: scope sends no CORS header)</label>
+    <button id="btnPing" class="ghost">Test connection</button>
+    <span class="badge" id="connBadge"><span class="dot" id="connDot"></span> not tested</span>
+  </div>
+</div>
+
+<!-- CHANNELS -->
+<div class="card">
+  <h2>Channels</h2>
+  <div class="radio-row" style="margin-bottom:10px">
+    <label><input type="radio" name="chmode" id="modeAuto" value="auto" checked> Auto-detect active channels</label>
+    <label><input type="radio" name="chmode" id="modeManual" value="manual"> Choose manually</label>
+  </div>
+  <div class="chk-row" id="manualBox">
+    <label><input type="checkbox" class="ch" value="1"> CH1</label>
+    <label><input type="checkbox" class="ch" value="2"> CH2</label>
+    <label><input type="checkbox" class="ch" value="3"> CH3</label>
+    <label><input type="checkbox" class="ch" value="4" checked> CH4</label>
+  </div>
+</div>
+
+<!-- OUTPUT FOLDER -->
+<div class="card">
+  <h2>Save location</h2>
+  <div class="folder-row">
+    <button id="btnFolder" class="ghost">📁 Choose working folder</button>
+    <span class="folder-tag" id="folderTag">Browser default (Downloads)</span>
+    <button id="btnClearFolder" class="ghost" style="font-weight:400">reset</button>
+  </div>
+  <div class="hint" style="margin-top:8px">
+    With a folder chosen, files are written straight into it (no download bar — that's a browser limit).
+    With <b>Browser default (Downloads)</b>, every file shows in the download bar at the top so you can open the file/folder.
+  </div>
+  <div class="fname-row" style="margin-top:12px">
+    <label class="field" style="flex:1">Last base name
+      <input type="text" id="lastName" readonly placeholder="(none yet)" />
+    </label>
+    <button id="btnCopyName" class="ghost" style="align-self:end">📋 Copy</button>
+  </div>
+</div>
+
+<!-- ACTIONS -->
+<div class="card">
+  <h2>Capture</h2>
+  <div class="chk-row" style="margin-bottom:12px">
+    <label><input type="checkbox" id="optImage"> 🖼️ Image (.png)</label>
+    <label><input type="checkbox" id="optSignal" checked> 📉 Signal (.csv)</label>
+    <label><input type="checkbox" id="optParams"> 📊 Signal + parameters (slower)</label>
+  </div>
+  <div class="radio-row" style="margin-bottom:12px">
+    <span style="font-size:13px;color:var(--muted)">Time column:</span>
+    <label><input type="radio" name="timefmt" id="timeFull" value="full" checked> Full time array</label>
+    <label><input type="radio" name="timefmt" id="timeTs" value="ts"> Ts only (smaller file)</label>
+  </div>
+  <div class="btns">
+    <button id="btnSave" class="primary">⬇️ Save</button>
+    <button id="btnClear" class="ghost" style="font-weight:400">Clear log</button>
+  </div>
+  <div class="hint" style="margin-top:8px">
+    Tick what you need, then Save. Multiple ticks share one base name.
+    <strong>Signal</strong> = fast (<code>time, CH&lt;n&gt;…</code> only).
+    <strong>Signal + parameters</strong> = adds the <code>parameter,value</code> block
+    (trigger, per-channel scale/coupling/impedance/bandwidth, on-screen measurements, cursors) — this takes longer.
+  </div>
+</div>
+
+<div class="card">
+  <h2>Log</h2>
+  <div id="log"></div>
+</div>
+
+<details>
+  <summary>Setup / launchers (proxy + Windows .bat + Linux .sh)</summary>
+  <p class="hint">
+    The proxy uses only the Python standard library — <strong>nothing to pip install</strong>.
+    Easiest start: double-click <code>start_oscillo.bat</code> (Windows) or run
+    <code>./start_oscillo.sh</code> (Linux/macOS).
+  </p>
+  <button class="copybtn ghost" id="copyProxy">Copy proxy.py</button>
+  <pre class="code" id="proxyCode">#!/usr/bin/env python3
+# proxy.py - tiny local CORS proxy. Stdlib only, no pip install.
+import http.server, socketserver, urllib.request, urllib.parse, http.client, socket, sys
+PORT = 8765
+class Proxy(http.server.BaseHTTPRequestHandler):
+    def _cors(self):
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Access-Control-Allow-Methods', 'GET,OPTIONS')
+        self.send_header('Access-Control-Allow-Headers', '*')
+    def do_OPTIONS(self):
+        self.send_response(204); self._cors(); self.end_headers()
+    def do_GET(self):
+        q = urllib.parse.urlparse(self.path).query
+        target = urllib.parse.parse_qs(q).get('u', [None])[0]
+        if not target:
+            self.send_response(400); self._cors(); self.end_headers()
+            self.wfile.write(b'missing ?u='); return
+        try:
+            r = urllib.request.urlopen(target, timeout=10)
+            ct = r.headers.get('Content-Type', 'application/octet-stream')
+            chunks = []
+            try:
+                while True:
+                    b = r.read(4096)
+                    if not b: break
+                    chunks.append(b)
+            except http.client.IncompleteRead as ir:
+                chunks.append(ir.partial)
+            except (socket.timeout, TimeoutError):
+                pass
+            data = b''.join(chunks)
+            self.send_response(200)
+            self.send_header('Content-Type', ct)
+            self.send_header('Content-Length', str(len(data)))
+            self._cors(); self.end_headers()
+            self.wfile.write(data)
+        except Exception as e:
+            self.send_response(502); self._cors(); self.end_headers()
+            try: self.wfile.write(str(e).encode())
+            except Exception: pass
+    def log_message(self, fmt, *a):
+        sys.stderr.write("[proxy] " + (fmt % a) + "\n")
+with socketserver.ThreadingTCPServer(('127.0.0.1', PORT), Proxy) as srv:
+    print(f"CORS proxy on http://127.0.0.1:{PORT}/  (Ctrl+C to stop)")
+    srv.serve_forever()
+</pre>
+</details>
+
+<script>
+/* =========================================================================
+   Oscilloscope Capture — single-file front end for Tektronix TDS3034
+   Talks to the scope's Comm.html SCPI-over-HTTP bridge through a local
+   CORS proxy. Only short, safe commands are sent (no bulk writes).
+   ========================================================================= */
+const $ = (id) => document.getElementById(id);
+const ipEl=$('ip'), maskEl=$('mask'), toEl=$('timeout'), portEl=$('proxyPort'),
+      proxyEl=$('useProxy'), logEl=$('log'), lastNameEl=$('lastName');
+
+/* ---------------- localStorage (all options) ---------------- */
+const LS='oscilloSettings_v3';
+function loadSettings(){
+  let s={}; try{ s=JSON.parse(localStorage.getItem(LS)||'{}'); }catch{}
+  ipEl.value     = s.ip      ?? '169.254.104.90';
+  maskEl.value   = s.mask    ?? '255.255.0.0';
+  toEl.value     = s.timeout ?? '10';
+  portEl.value   = s.port    ?? '8765';
+  proxyEl.checked= s.useProxy!==false;
+  const manual = s.manualCh || ['4'];
+  document.querySelectorAll('.ch').forEach(c=> c.checked = manual.includes(c.value));
+  if(s.chMode==='manual'){ $('modeManual').checked=true; } else { $('modeAuto').checked=true; }
+  $('optImage').checked  = s.optImage  === true;
+  $('optSignal').checked = s.optSignal !== false;   // default ON
+  $('optParams').checked = s.optParams === true;
+  if(s.timeFmt==='ts'){ $('timeTs').checked=true; } else { $('timeFull').checked=true; }
+  lastNameEl.value = s.lastName || '';
+  applyChMode();
+}
+function saveSettings(){
+  localStorage.setItem(LS, JSON.stringify({
+    ip:ipEl.value.trim(), mask:maskEl.value.trim(), timeout:toEl.value.trim(),
+    port:portEl.value.trim(), useProxy:proxyEl.checked,
+    chMode: $('modeManual').checked?'manual':'auto',
+    manualCh: Array.from(document.querySelectorAll('.ch:checked')).map(c=>c.value),
+    optImage: $('optImage').checked,
+    optSignal: $('optSignal').checked,
+    optParams: $('optParams').checked,
+    timeFmt: $('timeTs').checked?'ts':'full',
+    lastName: lastNameEl.value
+  }));
+}
+[ipEl,maskEl,toEl,portEl,proxyEl].forEach(el=>el.addEventListener('change',saveSettings));
+document.querySelectorAll('.ch').forEach(c=>c.addEventListener('change',saveSettings));
+['optImage','optSignal','optParams'].forEach(id=>$(id).addEventListener('change',saveSettings));
+['timeFull','timeTs'].forEach(id=>$(id).addEventListener('change',saveSettings));
+// Any connection-affecting change invalidates the green "Connected" state.
+[ipEl,portEl,proxyEl].forEach(el=>el.addEventListener('change',()=>{ setPingBtn('reset'); setConn('','not tested'); }));
+
+/* ---------------- auto/manual radios ---------------- */
+function applyChMode(){
+  const manual = $('modeManual').checked;
+  $('manualBox').classList.toggle('disabled', !manual);
+  document.querySelectorAll('.ch').forEach(c=> c.disabled = !manual);
+}
+$('modeAuto').addEventListener('change', ()=>{ applyChMode(); saveSettings(); });
+$('modeManual').addEventListener('change', ()=>{ applyChMode(); saveSettings(); });
+
+/* ---------------- logging + status ---------------- */
+function log(m){ const t=new Date().toLocaleTimeString();
+  logEl.textContent+=`[${t}] ${m}\n`; logEl.scrollTop=logEl.scrollHeight; }
+$('btnClear').addEventListener('click',()=>logEl.textContent='');
+function setConn(state,text){
+  const dot=$('connDot'); dot.className='dot'+(state==='ok'?' ok':state==='err'?' err':'');
+  $('connBadge').lastChild.textContent=' '+text;
+}
+
+/* ---------------- helpers ---------------- */
+function timestamp(){ const n=new Date(), p=(x,w=2)=>String(x).padStart(w,'0');
+  return `${n.getFullYear()}-${p(n.getMonth()+1)}-${p(n.getDate())}_`+
+         `${p(n.getHours())}-${p(n.getMinutes())}-${p(n.getSeconds())}-${p(n.getMilliseconds(),3)}`; }
+function fetchTO(url,opts={},ms=10000){ const c=new AbortController();
+  const id=setTimeout(()=>c.abort(),ms);
+  return fetch(url,{...opts,signal:c.signal}).finally(()=>clearTimeout(id)); }
+function wrap(url){ if(proxyEl.checked){ const p=portEl.value.trim()||'8765';
+  return `http://127.0.0.1:${p}/?u=${encodeURIComponent(url)}`; } return url; }
+function num(s){ if(!s) return NaN; const m=String(s).match(/-?\d+\.?\d*(?:[eE][+-]?\d+)?/);
+  return m?parseFloat(m[0]):NaN; }
+
+/* ---------------- File System Access (working folder) ---------------- */
+let dirHandle=null;
+const IDB_DB='oscilloFS', IDB_STORE='handles';
+function idb(){ return new Promise((res,rej)=>{ const r=indexedDB.open(IDB_DB,1);
+  r.onupgradeneeded=()=>r.result.createObjectStore(IDB_STORE);
+  r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }); }
+async function idbSet(k,v){ const d=await idb(); return new Promise((res,rej)=>{
+  const t=d.transaction(IDB_STORE,'readwrite'); t.objectStore(IDB_STORE).put(v,k);
+  t.oncomplete=()=>res(); t.onerror=()=>rej(t.error); }); }
+async function idbGet(k){ const d=await idb(); return new Promise((res,rej)=>{
+  const t=d.transaction(IDB_STORE,'readonly'); const rq=t.objectStore(IDB_STORE).get(k);
+  rq.onsuccess=()=>res(rq.result); rq.onerror=()=>rej(rq.error); }); }
+
+async function restoreFolder(){
+  if(!('showDirectoryPicker' in window)) { $('btnFolder').disabled=true;
+    $('folderTag').textContent='Not supported in this browser'; return; }
+  try{
+    const h=await idbGet('dir');
+    if(h){ dirHandle=h; $('folderTag').textContent='📂 '+h.name+' (saved)'; }
+  }catch{}
+}
+async function ensurePermission(h){
+  const opt={mode:'readwrite'};
+  if(await h.queryPermission(opt)==='granted') return true;
+  if(await h.requestPermission(opt)==='granted') return true;
+  return false;
+}
+$('btnFolder').addEventListener('click', async ()=>{
+  try{
+    const h=await window.showDirectoryPicker();
+    if(await ensurePermission(h)){ dirHandle=h; await idbSet('dir',h);
+      $('folderTag').textContent='📂 '+h.name; log('Working folder set: '+h.name); }
+  }catch(e){ log('Folder pick cancelled'); }
+});
+$('btnClearFolder').addEventListener('click', async ()=>{
+  dirHandle=null; try{ await idbSet('dir',null); }catch{}
+  $('folderTag').textContent='Browser default (Downloads)'; log('Folder reset to Downloads.');
+});
+
+async function saveFile(name, blob){
+  if(dirHandle){
+    try{
+      if(!await ensurePermission(dirHandle)) throw new Error('permission denied');
+      const fh=await dirHandle.getFileHandle(name,{create:true});
+      const w=await fh.createWritable(); await w.write(blob); await w.close();
+      log(`OK  : wrote ${name} -> 📂 ${dirHandle.name} (${blob.size} bytes)`);
+      return;
+    }catch(e){ log('Folder write failed ('+e.message+'), using Downloads.'); }
+  }
+  // No folder selected: native browser download (shows in the download bar at the top).
+  const url=URL.createObjectURL(blob); const a=document.createElement('a');
+  a.href=url; a.download=name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+  log(`OK  : saved ${name} (${blob.size} bytes)`);
+}
+
+function setLastName(base){ lastNameEl.value=base; saveSettings(); }
+$('btnCopyName').addEventListener('click', async ()=>{
+  if(!lastNameEl.value) return;
+  try{ await navigator.clipboard.writeText(lastNameEl.value); log('Copied: '+lastNameEl.value); }
+  catch{ lastNameEl.select(); document.execCommand('copy'); }
+});
+
+/* ============================ SCPI over HTTP ============================ */
+let SCPI_TEMPLATE=null, SCPI_TIMEOUT=15000;
+async function scpiRaw(cmd){
+  const ip=ipEl.value.trim(), enc=encodeURIComponent(cmd);
+  const cands = SCPI_TEMPLATE ? [SCPI_TEMPLATE.split('%s').join(enc)] : [
+    `http://${ip}/Comm.html?COMMAND=${enc}&gpibsend=Send`,
+    `http://${ip}/?COMMAND=${enc}&gpibsend=Send`
+  ];
+  let err;
+  for(const d of cands){
+    try{
+      const r=await fetchTO(wrap(d),{cache:'no-store'},SCPI_TIMEOUT);
+      if(!r.ok){ err=new Error('HTTP '+r.status); continue; }
+      const txt=await r.text();
+      if(!SCPI_TEMPLATE){ SCPI_TEMPLATE=d.split(enc).join('%s'); }
+      return parseScpiReply(txt);
+    }catch(e){ err=e; }
+  }
+  throw err||new Error('SCPI failed');
+}
+function parseScpiReply(html){
+  // TDS3000 puts the answer as plain text BEFORE an embedded HTTP/1.1 line.
+  const i=html.indexOf('HTTP/1.1');
+  let pre=(i>=0?html.slice(0,i):html).trim();
+  if(!pre || pre.charAt(0)==='<'){
+    const m=html.match(/<textarea[^>]*>([\s\S]*?)<\/textarea>/i);
+    if(m&&m[1].trim()) return m[1].trim();
+    return '';
+  }
+  return pre;
+}
+async function scpiQuery(cmd){ const r=await scpiRaw(cmd);
+  return r.toUpperCase().startsWith(cmd.toUpperCase())?r.slice(cmd.length).trim():r; }
+async function scpiWrite(cmd){ await scpiRaw(cmd); }
+
+async function getCurveASCII(){
+  await scpiWrite('DATA:ENC ASCII'); await scpiWrite('DATA:WIDTH 2');
+  const reply=await scpiQuery('CURVE?');
+  // Tolerate header echo like ":CURVE -1,-2,..." (HEADER ON) or plain "CURVE ...".
+  return reply.replace(/^:?CURVE\s*/i,'').split(',').map(parseFloat).filter(x=>!isNaN(x));
+}
+async function getActiveChannels(auto,manual){
+  if(!auto) return manual.map(n=>'CH'+n);
+  const found=[];
+  for(let i=1;i<=4;i++){
+    try{ const r=await scpiQuery(`SELECT:CH${i}?`);
+      const v=String(r).trim().split(/\s+/).pop();
+      log(`  SELECT:CH${i}? -> ${r}`);
+      if(v==='1'||v.toUpperCase()==='ON') found.push('CH'+i);
+    }catch(e){ log(`  CH${i} error: ${e.message}`); }
+  }
+  return found;
+}
+async function getChannelWaveform(ch){
+  await scpiWrite(`DATA:SOURCE ${ch}`); await scpiWrite('DATA:START 1');
+  let stop=10000;
+  try{ const nr=num(await scpiQuery('WFMPRE:NR_Pt?')); if(nr>0) stop=nr; }catch{}
+  await scpiWrite(`DATA:STOP ${stop}`);
+  const x_inc=num(await scpiQuery('WFMPRE:XINCR?'));
+  const y_mult=num(await scpiQuery('WFMPRE:YMULT?'));
+  const y_org=num(await scpiQuery('WFMPRE:YZERO?'));
+  const y_off=num(await scpiQuery('WFMPRE:YOFF?'));
+  const raw=await getCurveASCII();
+  const v=new Float64Array(raw.length);
+  for(let i=0;i<raw.length;i++) v[i]=(raw[i]-y_off)*y_mult+y_org;
+  return { x_inc, volts:v };
+}
+
+/* ----- metadata + measurements (short, safe queries only) ----- */
+// Strip TDS3000 header echo: ":CH1:IMPEDANCE MEG" -> "MEG", ":CH1:YUNIT \"V\"" -> "V"
+function cleanVal(s){
+  s=String(s??'').trim();
+  if(s.charAt(0)===':'){ const sp=s.indexOf(' '); if(sp>=0) s=s.slice(sp+1).trim(); }
+  return s.replace(/^"(.*)"$/,'$1');
+}
+async function q(cmd){ try{ return cleanVal(await scpiQuery(cmd)); }catch{ return ''; } }
+async function pushSafe(meta,key,cmd){ try{ meta.push([key, await q(cmd)]); }catch{ meta.push([key,'']); } }
+
+async function getMetadata(channels){
+  const meta=[];
+  // --- general (each query already swallows its own errors) ---
+  await pushSafe(meta,'model','*IDN?');
+  meta.push(['captured_at', new Date().toISOString()]);
+  await pushSafe(meta,'record_length','HORIZONTAL:RECORDLENGTH?');
+  await pushSafe(meta,'nb_points','WFMPRE:NR_Pt?');
+  await pushSafe(meta,'horizontal_scale_s_div','HORIZONTAL:MAIN:SCALE?');
+  await pushSafe(meta,'horizontal_position','HORIZONTAL:MAIN:POSITION?');
+  await pushSafe(meta,'sample_period_Ts','WFMPRE:XINCR?');
+  await pushSafe(meta,'acquire_mode','ACQUIRE:MODE?');
+  await pushSafe(meta,'acquire_numavg','ACQUIRE:NUMAVG?');
+  await pushSafe(meta,'trigger_type','TRIGGER:MAIN:TYPE?');
+  await pushSafe(meta,'trigger_source','TRIGGER:MAIN:EDGE:SOURCE?');
+  await pushSafe(meta,'trigger_slope','TRIGGER:MAIN:EDGE:SLOPE?');
+  await pushSafe(meta,'trigger_coupling','TRIGGER:MAIN:EDGE:COUPLING?');
+  await pushSafe(meta,'trigger_level','TRIGGER:MAIN:LEVEL?');
+
+  // --- per-channel hardware setup (noise/BW, impedance, AC-DC, etc.) ---
+  for(const ch of channels){
+    try{
+      await pushSafe(meta,`${ch}_scale_V_div`,`${ch}:SCALE?`);
+      await pushSafe(meta,`${ch}_position_div`,`${ch}:POSITION?`);
+      await pushSafe(meta,`${ch}_offset_V`,`${ch}:OFFSET?`);
+      await pushSafe(meta,`${ch}_coupling_AC_DC`,`${ch}:COUPLING?`);
+      await pushSafe(meta,`${ch}_impedance`,`${ch}:IMPEDANCE?`);   // MEG or FIFTY (50 ohm)
+      await pushSafe(meta,`${ch}_bandwidth_limit`,`${ch}:BANDWIDTH?`); // FULL / TWENTY (noise limit)
+      await pushSafe(meta,`${ch}_invert`,`${ch}:INVERT?`);
+      await pushSafe(meta,`${ch}_probe_atten`,`${ch}:PROBE?`);
+      await pushSafe(meta,`${ch}_yunit`,`${ch}:YUNIT?`);
+    }catch(e){ /* keep whatever we have, move on */ }
+  }
+
+  // --- displayed measurements only (the 4 slots shown on the scope screen) ---
+  for(let n=1;n<=4;n++){
+    try{
+      const state=await q(`MEASUREMENT:MEAS${n}:STATE?`);
+      if(state!=='1' && state.toUpperCase()!=='ON') continue;  // not shown -> skip
+      const type=await q(`MEASUREMENT:MEAS${n}:TYPE?`);
+      const src =await q(`MEASUREMENT:MEAS${n}:SOURCE?`);
+      const val =await q(`MEASUREMENT:MEAS${n}:VALUE?`);
+      const un  =await q(`MEASUREMENT:MEAS${n}:UNITS?`);
+      meta.push([`meas${n}_${src}_${type}`, val + (un?(' '+un):'')]);
+    }catch{ /* skip this slot, keep the rest */ }
+  }
+
+  // --- cursors (only the active type, value as shown on screen) ---
+  try{
+    const fn=(await q('CURSOR:FUNCTION?')).toUpperCase();
+    meta.push(['cursor_function', fn]);
+    if(fn==='VBARS' || fn==='PAIRED'){
+      const un=await q('CURSOR:VBARS:UNITS?');
+      meta.push(['cursor_vbars_delta', (await q('CURSOR:VBARS:DELTA?')) + (un?(' '+un):'')]);
+      meta.push(['cursor_vbars_pos1', (await q('CURSOR:VBARS:POSITION1?')) + (un?(' '+un):'')]);
+      meta.push(['cursor_vbars_pos2', (await q('CURSOR:VBARS:POSITION2?')) + (un?(' '+un):'')]);
+    }
+    if(fn==='HBARS' || fn==='PAIRED'){
+      const un=await q('CURSOR:HBARS:UNITS?');
+      meta.push(['cursor_hbars_delta', (await q('CURSOR:HBARS:DELTA?')) + (un?(' '+un):'')]);
+      meta.push(['cursor_hbars_pos1', (await q('CURSOR:HBARS:POSITION1?')) + (un?(' '+un):'')]);
+      meta.push(['cursor_hbars_pos2', (await q('CURSOR:HBARS:POSITION2?')) + (un?(' '+un):'')]);
+    }
+  }catch{ /* cursors off or unsupported */ }
+  return meta;
+}
+
+/* ============================ IMAGE ============================ */
+async function fetchImageBlob(){
+  const ip=ipEl.value.trim();
+  const tMs=(parseFloat(toEl.value)||10)*1000;
+  const r=await fetchTO(wrap(`http://${ip}/Image.png`),{cache:'no-store'},tMs);
+  if(!r.ok) throw new Error('HTTP '+r.status);
+  const blob=await r.blob();
+  if(blob.size===0) throw new Error('empty image');
+  return blob;
+}
+async function downloadImage(base){
+  saveSettings();
+  if(!ipEl.value.trim()) return log('ERR: IP empty');
+  const name=(base||timestamp())+'.png';
+  log('Image: fetching...');
+  try{ const blob=await fetchImageBlob(); await saveFile(name,blob); if(!base) setLastName(name.replace(/\.png$/,'')); }
+  catch(e){ log('ERR : '+e.message); log(proxyEl.checked?'HINT: is proxy.py running?':'HINT: enable proxy + run proxy.py'); }
+}
+
+/* ============================ SIGNAL ============================ */
+async function captureSignal(base, includeParams){
+  saveSettings();
+  if(!ipEl.value.trim()) throw new Error('IP empty');
+  SCPI_TIMEOUT=(parseFloat(toEl.value)||10)*1000; SCPI_TEMPLATE=null;
+  const auto=$('modeAuto').checked;
+  const manual=Array.from(document.querySelectorAll('.ch:checked')).map(e=>e.value);
+
+  log('--- Signal capture'+(includeParams?' + parameters':'')+' ---');
+  log('*IDN? -> '+await scpiQuery('*IDN?'));
+  // READ ONLY: never change acquisition state (do not STOP/RUN). Leave the scope exactly as the user set it.
+
+  const requested=await getActiveChannels(auto,manual);
+  log('Channels: '+(requested.join(',')||'(none)'));
+  if(requested.length===0) throw new Error('no channels selected/active');
+
+  // Read each channel independently: a failure on one keeps the others.
+  const data={}; const channels=[]; let xInc=null;
+  for(const ch of requested){
+    try{
+      log(`Reading ${ch} ...`);
+      const w=await getChannelWaveform(ch);
+      if(!w.volts || w.volts.length===0) throw new Error('empty waveform');
+      data[ch]=w.volts; channels.push(ch); if(!xInc) xInc=w.x_inc;
+      log(`  ${ch}: ${w.volts.length} pts, Ts=${w.x_inc}`);
+    }catch(e){ log(`  WARN ${ch} skipped: ${e.message}`); }
+  }
+  if(channels.length===0) throw new Error('no waveform data captured');
+  if(!xInc || isNaN(xInc)) { xInc=1; log('WARN: Ts unknown, using index as time'); }
+
+  // Parameters are optional (slow). Best-effort: never lose the waveform.
+  let meta=[];
+  if(includeParams){
+    try{ log('Reading settings + measurements (slower) ...'); meta=await getMetadata(channels); }
+    catch(e){ log('WARN metadata partial: '+e.message); }
+  }
+  // READ ONLY: do NOT send RUN. Scope stays in whatever run/stop state the user chose.
+
+  // ---- build CSV ----
+  // Time column mode:
+  //   full : time, CHx...               (one time value per row)
+  //   ts   : CHx..., Ts                 (Ts written once on the first row only; rebuild time = i*Ts)
+  // With params an extra: parameter, value
+  const tsOnly = $('timeTs').checked;
+  const N=Math.max(...channels.map(c=>data[c].length));
+  const baseCols = tsOnly ? [...channels,'Ts'] : ['time',...channels];
+  const header=includeParams ? [...baseCols,'parameter','value'].join(',')
+                             : baseCols.join(',');
+  const rows=[header];
+  for(let i=0;i<N;i++){
+    const row=[];
+    if(!tsOnly) row.push((i*xInc).toExponential(9));
+    for(const ch of channels){ const v=data[ch][i]; row.push(v===undefined?'':v.toExponential(9)); }
+    if(tsOnly) row.push(i===0 ? xInc.toExponential(9) : '');   // Ts once, then blank
+    if(includeParams){
+      if(i<meta.length){ row.push(csvCell(meta[i][0]), csvCell(meta[i][1])); }
+      else { row.push('',''); }
+    }
+    rows.push(row.join(','));
+  }
+  const csv=rows.join('\n');
+  const name=(base||timestamp())+'.csv';
+  await saveFile(name,new Blob([csv],{type:'text/csv'}));
+  log(`OK  : CSV ${name} (${N} rows, ${channels.length} ch`+(tsOnly?`, Ts=${xInc.toExponential(6)}`:'')+(includeParams?`, ${meta.length} params`:'')+')');
+  return name.replace(/\.csv$/,'');
+}
+function csvCell(s){ s=String(s??''); return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s; }
+
+/* ============================ SAVE (checkbox driven) ============================ */
+async function doSave(){
+  saveSettings();
+  const wantImage  = $('optImage').checked;
+  const wantSignal = $('optSignal').checked;
+  const wantParams = $('optParams').checked;   // signal + parameters
+  if(!wantImage && !wantSignal && !wantParams){
+    log('Nothing selected. Tick Image and/or Signal first.');
+    return;
+  }
+  const base=timestamp();
+  setLastName(base);            // show name immediately so user can copy it while saving runs
+  $('btnSave').disabled=true;
+  log('=== Save (base '+base+') ===');
+  try{
+    if(wantImage){ await downloadImage(base); }                 // <base>.png
+    if(wantSignal || wantParams){
+      await captureSignal(base, wantParams);                    // params only if that box ticked
+    }
+    log('=== Done: '+base+' ===');
+  }catch(e){ log('ERR : '+e.message);
+    log(proxyEl.checked?`HINT: is proxy.py running on port ${portEl.value}?`:'HINT: enable proxy + run proxy.py'); }
+  finally{ $('btnSave').disabled=false; }
+}
+
+/* ============================ TEST CONNECTION ============================ */
+function setPingBtn(state){
+  // Button stays static (no text/color change). Status is shown by the LED badge next to it.
+}
+async function pingScope(){
+  saveSettings();
+  if(!ipEl.value.trim()) return log('ERR: IP empty');
+  SCPI_TIMEOUT=(parseFloat(toEl.value)||10)*1000; SCPI_TEMPLATE=null;
+  const ip=ipEl.value.trim();
+  setPingBtn('busy');
+  log(`Testing ${proxyEl.checked?'[via proxy] ':''}http://${ip}/ ...`);
+  if(proxyEl.checked){
+    try{
+      const u=`http://127.0.0.1:${portEl.value.trim()||'8765'}/?u=${encodeURIComponent('http://'+ip+'/Image.png')}`;
+      const r=await fetchTO(u,{},SCPI_TIMEOUT);
+      log(`  Proxy OK, scope returned ${r.status}`);
+    }catch(e){ log('  Proxy/scope error: '+e.message); log('  Run proxy.py first.');
+      setConn('err','proxy down'); setPingBtn('bad'); return; }
+  }
+  try{ const idn=await scpiQuery('*IDN?'); log('  *IDN? -> '+idn);
+    if(idn){ setConn('ok','connected'); setPingBtn('ok'); }
+    else { setConn('err','no SCPI reply'); setPingBtn('bad'); }
+  }catch(e){ log('  SCPI error: '+e.message); setConn('err','error'); setPingBtn('bad'); }
+}
+
+/* ---------------- wiring ---------------- */
+$('btnSave').addEventListener('click',doSave);
+$('btnPing').addEventListener('click',pingScope);
+$('copyProxy').addEventListener('click',async(ev)=>{ ev.preventDefault();
+  try{ await navigator.clipboard.writeText($('proxyCode').textContent); ev.target.textContent='Copied!'; }
+  catch{ ev.target.textContent='Copy failed'; }
+  setTimeout(()=>ev.target.textContent='Copy proxy.py',1500); });
+
+/* ---------------- init ---------------- */
+loadSettings();
+restoreFolder();
+log('Ready. Start the proxy (start_oscillo.bat / .sh) then Test connection.');
+</script>
+</body>
+</html>
