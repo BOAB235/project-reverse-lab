@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Oscilloscope Capture</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { font-family: system-ui, Segoe UI, Arial, sans-serif; max-width: 880px; margin: 24px auto; padding: 0 16px; }
+  h1 { margin-bottom: 4px; }
+  .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: end; margin: 10px 0; }
+  label { display: flex; flex-direction: column; font-size: 13px; }
+  input[type="text"] { padding: 6px 8px; font-size: 14px; border: 1px solid #888; border-radius: 4px; min-width: 180px; }
+  button { padding: 8px 14px; font-size: 14px; border: 1px solid #555; border-radius: 4px; cursor: pointer; background: #eee; }
+  button:hover { background: #ddd; }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  .channels { display: flex; gap: 14px; flex-wrap: wrap; }
+  .channels label { flex-direction: row; gap: 6px; align-items: center; }
+  #log { margin-top: 14px; padding: 10px; background: #111; color: #0f0;
+         font-family: Consolas, monospace; font-size: 12px;
+         border-radius: 4px; height: 280px; overflow: auto; white-space: pre-wrap; }
+  .status { font-size: 12px; opacity: .8; }
+  .pill { padding: 2px 8px; border-radius: 10px; background: #ddd; font-size: 12px; }
+  details { margin-top: 18px; border: 1px solid #ccc; border-radius: 6px; padding: 8px 12px; }
+  details summary { cursor: pointer; font-weight: 600; }
+  pre.code { background: #1e1e1e; color: #ddd; padding: 12px; border-radius: 4px;
+             overflow: auto; font-size: 12px; font-family: Consolas, monospace; }
+  .copybtn { float: right; }
+  .warn { color: #b30; font-size: 12px; }
+</style>
+</head>
+<body>
+
+<h1>Oscilloscope Capture</h1>
+<div class="status">Image + Signal (CSV) via the scope's HTTP server. Settings are saved in your browser.</div>
+
+<div class="row">
+  <label>Scope IP
+    <input type="text" id="ip" placeholder="169.254.104.90" />
+  </label>
+  <label>Subnet mask
+    <input type="text" id="mask" placeholder="255.255.0.0" />
+  </label>
+  <label>HTTP timeout (s)
+    <input type="text" id="timeout" value="10" style="min-width:80px" />
+  </label>
+  <label>Proxy port
+    <input type="text" id="proxyPort" value="8765" style="min-width:80px" />
+  </label>
+</div>
+
+<div class="row">
+  <label><input type="checkbox" id="useProxy" checked> Use local proxy (required because the scope does not send CORS headers)</label>
+</div>
+
+<div class="row">
+  <button id="btnPing">Test connection</button>
+  <button id="btnImage">Download Image (.png)</button>
+  <button id="btnSignal">Download Signal (.csv)</button>
+  <button id="btnClear">Clear log</button>
+</div>
+
+<div class="row">
+  <span class="pill">Channels to capture:</span>
+  <div class="channels">
+    <label><input type="checkbox" class="ch" value="1" checked> CH1</label>
+    <label><input type="checkbox" class="ch" value="2"> CH2</label>
+    <label><input type="checkbox" class="ch" value="3"> CH3</label>
+    <label><input type="checkbox" class="ch" value="4"> CH4</label>
+    <label><input type="checkbox" id="autoCh" checked> Auto-detect active</label>
+  </div>
+</div>
+
+<div id="log"></div>
+
+<details open>
+  <summary>Why a proxy is needed + 25-line Python proxy (run once)</summary>
+  <p>
+    Browsers refuse to read responses from a server that does not send the
+    <code>Access-Control-Allow-Origin</code> header (CORS). The scope does not send it,
+    so a direct <code>fetch()</code> fails with <em>"Failed to fetch"</em> even though
+    Python and ping work. The fix is a tiny local relay that forwards your request and
+    adds the missing header.
+  </p>
+  <p><strong>One-time setup:</strong></p>
+  <ol>
+    <li>Save the code below as <code>proxy.py</code> in any folder.</li>
+    <li>Open a terminal: <code>python proxy.py</code>  (Python stdlib only - no pip).</li>
+    <li>Leave it running. Click the buttons above. Re-use the same window next time.</li>
+  </ol>
+  <button class="copybtn" id="copyProxy">Copy code</button>
+  <pre class="code" id="proxyCode">#!/usr/bin/env python3
+# proxy.py - tiny local CORS proxy for the oscilloscope HTML page
+# Run:  python proxy.py
+# Then in the HTML enable "Use local proxy" (default ON).
+
+import http.server, socketserver, urllib.request, urllib.parse, http.client, socket, sys
+
+PORT = 8765   # must match "Proxy port" in the HTML
+
+class Proxy(http.server.BaseHTTPRequestHandler):
+    def _cors(self):
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Access-Control-Allow-Methods', 'GET,OPTIONS')
+        self.send_header('Access-Control-Allow-Headers', '*')
+
+    def do_OPTIONS(self):
+        self.send_response(204); self._cors(); self.end_headers()
+
+    def do_GET(self):
+        q = urllib.parse.urlparse(self.path).query
+        target = urllib.parse.parse_qs(q).get('u', [None])[0]
+        if not target:
+            self.send_response(400); self._cors(); self.end_headers()
+            self.wfile.write(b'missing ?u='); return
+        try:
+            r = urllib.request.urlopen(target, timeout=10)
+            ct = r.headers.get('Content-Type', 'application/octet-stream')
+            # The scope often advertises a wrong Content-Length and then closes
+            # the socket early (IncompleteRead) or stops sending (read timeout).
+            # In every case the bytes already received ARE the complete reply,
+            # so we read in chunks and keep whatever arrives.
+            chunks = []
+            try:
+                while True:
+                    b = r.read(4096)
+                    if not b:
+                        break
+                    chunks.append(b)
+            except http.client.IncompleteRead as ir:
+                chunks.append(ir.partial)
+            except (socket.timeout, TimeoutError):
+                pass
+            data = b''.join(chunks)
+            self.send_response(200)
+            self.send_header('Content-Type', ct)
+            self.send_header('Content-Length', str(len(data)))
+            self._cors(); self.end_headers()
+            self.wfile.write(data)
+        except Exception as e:
+            self.send_response(502); self._cors(); self.end_headers()
+            try:
+                self.wfile.write(str(e).encode())
+            except Exception:
+                pass
+
+    def log_message(self, fmt, *args):
+        sys.stderr.write("[proxy] %s - %s\n" % (self.address_string(), fmt % args))
+
+with socketserver.ThreadingTCPServer(('127.0.0.1', PORT), Proxy) as srv:
+    print(f"CORS proxy listening on http://127.0.0.1:{PORT}/   (Ctrl+C to stop)")
+    srv.serve_forever()
+</pre>
+  <p class="warn">
+    Security note: the proxy binds 127.0.0.1 only (not exposed on the network)
+    and only forwards GET. Stop it when you are done.
+  </p>
+</details>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const ipEl    = $('ip');
+const maskEl  = $('mask');
+const toEl    = $('timeout');
+const portEl  = $('proxyPort');
+const proxyEl = $('useProxy');
+const logEl   = $('log');
+
+/* ---------- localStorage ---------- */
+const LS_KEY = 'oscilloSettings_v2';
+function loadSettings() {
+  try {
+    const s = JSON.parse(localStorage.getItem(LS_KEY) || '{}');
+    ipEl.value      = s.ip      || '169.254.104.90';
+    maskEl.value    = s.mask    || '255.255.0.0';
+    toEl.value      = s.timeout || '10';
+    portEl.value    = s.port    || '8765';
+    proxyEl.checked = s.useProxy !== false;
+  } catch { ipEl.value='169.254.104.90'; maskEl.value='255.255.0.0'; }
+}
+function saveSettings() {
+  localStorage.setItem(LS_KEY, JSON.stringify({
+    ip: ipEl.value.trim(),
+    mask: maskEl.value.trim(),
+    timeout: toEl.value.trim(),
+    port: portEl.value.trim(),
+    useProxy: proxyEl.checked
+  }));
+}
+[ipEl, maskEl, toEl, portEl, proxyEl].forEach(el => el.addEventListener('change', saveSettings));
+loadSettings();
+
+/* ---------- logging ---------- */
+function log(msg) {
+  const t = new Date().toLocaleTimeString();
+  logEl.textContent += `[${t}] ${msg}\n`;
+  logEl.scrollTop = logEl.scrollHeight;
+}
+$('btnClear').addEventListener('click', () => logEl.textContent = '');
+
+/* ---------- helpers ---------- */
+function timestamp() {
+  const n = new Date(), pad = (x,w=2)=>String(x).padStart(w,'0');
+  return `${n.getFullYear()}-${pad(n.getMonth()+1)}-${pad(n.getDate())}_`+
+         `${pad(n.getHours())}-${pad(n.getMinutes())}-${pad(n.getSeconds())}-`+
+         `${pad(n.getMilliseconds(),3)}`;
+}
+function fetchWithTimeout(url, opts={}, timeoutMs=10000) {
+  const ctrl = new AbortController();
+  const id = setTimeout(()=>ctrl.abort(), timeoutMs);
+  return fetch(url, {...opts, signal: ctrl.signal}).finally(()=>clearTimeout(id));
+}
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 1000);
+}
+function wrap(url) {
+  if (proxyEl.checked) {
+    const port = portEl.value.trim() || '8765';
+    return `http://127.0.0.1:${port}/?u=${encodeURIComponent(url)}`;
+  }
+  return url;
+}
+
+/* ============================================================
+   IMAGE
+   ============================================================ */
+async function downloadImage() {
+  saveSettings();
+  const ip = ipEl.value.trim();
+  if (!ip) return log('ERR: IP is empty');
+  const tMs  = (parseFloat(toEl.value)||10)*1000;
+  const url  = wrap(`http://${ip}/Image.png`);
+  const name = `${timestamp()}.png`;
+  log(`Image: GET ${url}`);
+  try {
+    const r = await fetchWithTimeout(url, {cache:'no-store'}, tMs);
+    if (!r.ok) throw new Error('HTTP '+r.status);
+    const blob = await r.blob();
+    if (blob.size === 0) throw new Error('empty response');
+    downloadBlob(blob, name);
+    log(`OK  : saved ${name} (${blob.size} bytes)`);
+  } catch (e) {
+    log(`ERR : ${e.message}`);
+    log(proxyEl.checked ? 'HINT: is proxy.py running?' : 'HINT: enable "Use local proxy" and run proxy.py.');
+  }
+}
+
+/* ============================================================
+   SCPI over HTTP (Tek)
+   ============================================================ */
+let SCPI_TEMPLATE = null;
+let SCPI_TIMEOUT  = 15000;
+
+async function scpiRaw(cmd) {
+  const ip  = ipEl.value.trim();
+  const enc = encodeURIComponent(cmd);
+  const candidates = SCPI_TEMPLATE
+    ? [SCPI_TEMPLATE.split('%s').join(enc)]
+    : [
+        `http://${ip}/Comm.html?COMMAND=${enc}&gpibsend=Send`,
+        `http://${ip}/?COMMAND=${enc}&gpibsend=Send`,
+        `http://${ip}/scope/cgi-bin/command.cgi?command=${enc}`
+      ];
+  let lastErr;
+  for (const direct of candidates) {
+    try {
+      const r = await fetchWithTimeout(wrap(direct), {cache:'no-store'}, SCPI_TIMEOUT);
+      if (!r.ok) { lastErr = new Error('HTTP '+r.status); continue; }
+      const txt = await r.text();
+      if (!SCPI_TEMPLATE) {
+        SCPI_TEMPLATE = direct.split(enc).join('%s');
+        log(`SCPI endpoint: ${direct.split('?')[0]}`);
+      }
+      return parseScpiReply(txt);
+    } catch (e) { lastErr = e; }
+  }
+  throw lastErr || new Error('all SCPI endpoints failed');
+}
+function parseScpiReply(html) {
+  // Tektronix TDS3000-series Comm.html returns the SCPI answer as plain text
+  // BEFORE an embedded "HTTP/1.1" status line; the <textarea> stays empty.
+  // A write command (no answer) returns the HTML form page directly instead.
+  const i = html.indexOf('HTTP/1.1');
+  let pre = (i >= 0 ? html.slice(0, i) : html).trim();
+  if (!pre || pre.charAt(0) === '<') {
+    // Fallback for other firmware that uses the textarea/value field.
+    let m = html.match(/<textarea[^>]*>([\s\S]*?)<\/textarea>/i);
+    if (m && m[1].trim()) return m[1].trim();
+    m = html.match(/name=["']?reply["']?[^>]*value=["']([^"']*)["']/i);
+    if (m) return m[1].trim();
+    return '';
+  }
+  return pre;
+}
+async function scpiQuery(cmd) {
+  const r = await scpiRaw(cmd);
+  return r.toUpperCase().startsWith(cmd.toUpperCase())
+       ? r.slice(cmd.length).trim() : r;
+}
+async function scpiWrite(cmd) { await scpiRaw(cmd); }
+function num(s) {
+  if (!s) return NaN;
+  const m = String(s).match(/-?\d+\.?\d*(?:[eE][+-]?\d+)?/);
+  return m ? parseFloat(m[0]) : NaN;
+}
+async function getCurveASCII() {
+  await scpiWrite('DATA:ENC ASCII');
+  await scpiWrite('DATA:WIDTH 2');
+  const reply = await scpiQuery('CURVE?');
+  return reply.replace(/^CURVE\s*/i,'')
+              .split(',')
+              .map(parseFloat)
+              .filter(x => !isNaN(x));
+}
+async function getActiveChannels(autoDetect, manualList) {
+  if (!autoDetect) return manualList.map(n => 'CH'+n);
+  const found = [];
+  for (let i=1; i<=4; i++) {
+    try {
+      const r = await scpiQuery(`SELECT:CH${i}?`);
+      const v = String(r).trim().split(/\s+/).pop();
+      log(`  SELECT:CH${i}? -> ${r}`);
+      if (v === '1' || v.toUpperCase() === 'ON') found.push('CH'+i);
+    } catch (e) { log(`  CH${i} error: ${e.message}`); }
+  }
+  return found;
+}
+async function getChannelWaveform(ch) {
+  await scpiWrite(`DATA:SOURCE ${ch}`);
+  await scpiWrite('DATA:START 1');
+  let stop = 10000;
+  try {
+    const nr = num(await scpiQuery('WFMPRE:NR_Pt?'));
+    if (!isNaN(nr) && nr > 0) stop = nr;
+  } catch {}
+  await scpiWrite(`DATA:STOP ${stop}`);
+
+  const x_inc  = num(await scpiQuery('WFMPRE:XINCR?'));
+  const y_mult = num(await scpiQuery('WFMPRE:YMULT?'));
+  const y_org  = num(await scpiQuery('WFMPRE:YZERO?'));
+  const y_off  = num(await scpiQuery('WFMPRE:YOFF?'));
+
+  const raw = await getCurveASCII();
+  const v = new Float64Array(raw.length);
+  for (let i=0; i<raw.length; i++) v[i] = (raw[i]-y_off)*y_mult + y_org;
+  return { x_inc, volts: v };
+}
+
+/* ============================================================
+   SIGNAL main
+   ============================================================ */
+async function downloadSignal() {
+  saveSettings();
+  const ip = ipEl.value.trim();
+  if (!ip) return log('ERR: IP is empty');
+  SCPI_TIMEOUT  = (parseFloat(toEl.value)||10)*1000;
+  SCPI_TEMPLATE = null;
+
+  const autoDetect = $('autoCh').checked;
+  const manual = Array.from(document.querySelectorAll('.ch:checked')).map(e=>e.value);
+
+  $('btnSignal').disabled = true;
+  try {
+    log('--- Signal capture start ---');
+    log('*IDN? -> ' + await scpiQuery('*IDN?'));
+
+    try { await scpiWrite('ACQUIRE:STATE STOP'); log('Acquisition stopped'); }
+    catch (e) { log('WARN ACQ STOP: '+e.message); }
+
+    const channels = await getActiveChannels(autoDetect, manual);
+    log('Channels: ' + (channels.join(',') || '(none)'));
+    if (channels.length === 0) throw new Error('no channels');
+
+    const data = {};
+    let xInc = null;
+    for (const ch of channels) {
+      log(`Reading ${ch} ...`);
+      const w = await getChannelWaveform(ch);
+      data[ch] = w.volts;
+      if (xInc === null || !xInc) xInc = w.x_inc;
+      log(`  ${ch}: ${w.volts.length} points, Ts=${w.x_inc}`);
+    }
+
+    try { await scpiWrite('ACQUIRE:STATE RUN'); } catch {}
+
+    const N = Math.max(...channels.map(c => data[c].length));
+    const header = ['time', ...channels].join(',');
+    const rows = [header];
+    for (let i=0; i<N; i++) {
+      const row = [(i*xInc).toExponential(9)];
+      for (const ch of channels) {
+        const v = data[ch][i];
+        row.push(v === undefined ? '' : v.toExponential(9));
+      }
+      rows.push(row.join(','));
+    }
+    const csv = rows.join('\n');
+    const name = `${timestamp()}.csv`;
+    downloadBlob(new Blob([csv], {type:'text/csv'}), name);
+    log(`OK  : saved ${name} (${N} rows, ${channels.length} channels)`);
+  } catch (e) {
+    log('ERR : ' + e.message);
+    log(proxyEl.checked ? `HINT: is proxy.py running on port ${portEl.value}?`
+                        : 'HINT: enable "Use local proxy" and run proxy.py.');
+  } finally {
+    $('btnSignal').disabled = false;
+  }
+}
+
+/* ============================================================
+   Test connection
+   ============================================================ */
+async function pingScope() {
+  saveSettings();
+  const ip = ipEl.value.trim();
+  if (!ip) return log('ERR: IP is empty');
+  SCPI_TIMEOUT = (parseFloat(toEl.value)||10)*1000;
+  log(`Testing ${proxyEl.checked ? '[via proxy] ' : ''}http://${ip}/ ...`);
+
+  if (proxyEl.checked) {
+    try {
+      const u = `http://127.0.0.1:${portEl.value.trim()||'8765'}/?u=${encodeURIComponent('http://'+ip+'/')}`;
+      const r = await fetchWithTimeout(u, {}, SCPI_TIMEOUT);
+      log(`  Proxy reachable, scope HTTP returned: ${r.status} ${r.statusText}`);
+    } catch (e) {
+      log(`  Proxy/scope error: ${e.message}`);
+      log('  Make sure "python proxy.py" is running.');
+      return;
+    }
+  } else {
+    try {
+      const r = await fetchWithTimeout(`http://${ip}/`, {}, SCPI_TIMEOUT);
+      log(`  HTTP: ${r.status} ${r.statusText}`);
+    } catch (e) {
+      log(`  HTTP error: ${e.message} (likely CORS - enable proxy)`);
+    }
+  }
+  try { log('  *IDN? -> ' + await scpiQuery('*IDN?')); }
+  catch (e) { log('  SCPI error: ' + e.message); }
+}
+
+/* ---------- wiring ---------- */
+$('btnImage').addEventListener('click', downloadImage);
+$('btnSignal').addEventListener('click', downloadSignal);
+$('btnPing').addEventListener('click', pingScope);
+$('copyProxy').addEventListener('click', async (ev) => {
+  ev.preventDefault();
+  try {
+    await navigator.clipboard.writeText($('proxyCode').textContent);
+    ev.target.textContent = 'Copied!';
+  } catch { ev.target.textContent = 'Copy failed'; }
+  setTimeout(()=>ev.target.textContent = 'Copy code', 1500);
+});
+
+log('Ready. IP/mask/port saved in browser localStorage.');
+log('1) Save the Python proxy code below as proxy.py');
+log('2) In a terminal:  python proxy.py');
+log('3) Click "Test connection".');
+</script>
+</body>
+</html>
