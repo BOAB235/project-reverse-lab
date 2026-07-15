@@ -1,5 +1,7 @@
 test_idea.html FOLDER1.zip.enc
 test2.html Design_of_1200W_LLC_DCDC_Other.zip.enc
 test3.html sujet_PHD.zip.enc
+Test.7z.enc Test.html
+
 PW: Hard AES PW 
 9775478017;64;100;base64
